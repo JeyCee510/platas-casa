@@ -27,7 +27,7 @@ const COLOR_BG: Record<string, string> = {
   lilac: 'bg-lilac', bubble: 'bg-bubble', teal: 'bg-teal',
 };
 
-export function AddExpenseForm({ categories, alexConcepts = [], accounts = [] }: { categories: Category[]; alexConcepts?: AlexConcept[]; accounts?: Account[] }) {
+export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], recentCategoryIds = [] }: { categories: Category[]; alexConcepts?: AlexConcept[]; accounts?: Account[]; recentCategoryIds?: number[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const source = params.get('source') ?? 'manual';
@@ -164,6 +164,10 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [] }:
   const selectedSub = categories.find((c) => String(c.id) === categoryId);
   const activeSubs = activeGroupId ? subsByGroup.get(activeGroupId) ?? [] : [];
   const showAlexLink = !!selectedSub && ALEX_SLUGS.has(selectedSub.slug);
+  // Categorías recientes (subs)
+  const recentCats = recentCategoryIds
+    .map((id) => categories.find((c) => c.id === id))
+    .filter((c): c is Category => !!c && c.parent_id !== null);
 
   return (
     <div className="space-y-3">
@@ -222,12 +226,35 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [] }:
           />
         </Card>
 
-        {/* Categoría: grupos + subcategorías */}
+        {/* Categoría: recientes + grupos + subcategorías */}
         <Card tone="white" className="p-3">
           <Label>Categoría {selectedSub && <span className="text-xs">→ {selectedSub.emoji} {selectedSub.name}</span>}</Label>
 
+          {/* Recientes (top 6) */}
+          {recentCats.length > 0 && (
+            <>
+              <p className="text-[10px] font-bold uppercase text-ink/70 mb-1">Recientes</p>
+              <div className="grid grid-cols-3 gap-1.5 mb-2">
+                {recentCats.map((c) => {
+                  const selected = categoryId === String(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => { setCategoryId(String(c.id)); setActiveGroupId(c.parent_id); }}
+                      className={`border-3 border-ink rounded-md px-1 py-1.5 text-[11px] font-bold ${selected ? 'bg-lemon shadow-brutSm' : 'bg-white'} active:translate-x-[1px] active:translate-y-[1px]`}
+                    >
+                      {c.emoji} {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          <p className="text-[10px] font-bold uppercase text-ink/70 mb-1">Grupos</p>
           {/* Grupos */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
+          <div className="grid grid-cols-3 gap-1.5 mb-2">
             {groups.map((g) => {
               const active = activeGroupId === g.id;
               const bg = active ? (COLOR_BG[g.color] ?? 'bg-sky') : 'bg-white';
@@ -236,10 +263,10 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [] }:
                   key={g.id}
                   type="button"
                   onClick={() => { setActiveGroupId(active ? null : g.id); }}
-                  className={`border-3 border-ink rounded-md px-2 py-2 font-bold text-xs ${bg} ${active ? 'shadow-brutSm' : 'opacity-80'} active:translate-x-[1px] active:translate-y-[1px]`}
+                  className={`border-3 border-ink rounded-md px-1 py-1.5 font-bold text-[10px] ${bg} ${active ? 'shadow-brutSm' : 'opacity-80'} active:translate-x-[1px] active:translate-y-[1px] leading-tight`}
                 >
-                  <div className="text-xl">{g.emoji}</div>
-                  <div className="text-[10px] leading-tight">{g.name}</div>
+                  <div className="text-base">{g.emoji}</div>
+                  <div>{g.name}</div>
                 </button>
               );
             })}
@@ -338,7 +365,10 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [] }:
           {showDate && (
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           )}
-          <Textarea rows={2} placeholder="Descripción (opcional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <div>
+            <Label htmlFor="desc-field">📝 Nota / detalle</Label>
+            <Textarea id="desc-field" rows={2} placeholder="Lo que sea útil recordar después" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
         </Card>
 
         {/* Verificar */}

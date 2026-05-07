@@ -133,6 +133,16 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      {/* CTAs secundarios: ingreso + transferir */}
+      <div className="grid grid-cols-2 gap-2">
+        <Link href="/ingresos" className="border-3 border-ink rounded-md bg-mint shadow-brutSm p-2.5 flex items-center justify-center gap-2 font-black text-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+          💰 Ingreso
+        </Link>
+        <Link href="/transferir" className="border-3 border-ink rounded-md bg-teal shadow-brutSm p-2.5 flex items-center justify-center gap-2 font-black text-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+          💳 Pagar tarjeta
+        </Link>
+      </div>
+
       {/* Balance del mes: ingresos vs gastos */}
       <Card tone="white" className="p-4">
         <div className="grid grid-cols-3 gap-3 text-center">
