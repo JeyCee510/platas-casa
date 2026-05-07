@@ -6,8 +6,11 @@ import { Input, Select, Textarea, Label } from '@/components/ui/Input';
 import { crearIngreso } from '@/lib/incomes';
 import { todayISO } from '@/lib/format';
 
-export function AddIncomeForm() {
+type Account = { id: number; type: 'credit_card' | 'bank_account'; name: string };
+
+export function AddIncomeForm({ accounts = [] }: { accounts?: Account[] }) {
   const [open, setOpen] = useState(false);
+  const pichincha = accounts.find((a) => a.name.toLowerCase() === 'pichincha');
 
   if (!open) {
     return <Button variant="primary" full onClick={() => setOpen(true)}>+ Registrar ingreso</Button>;
@@ -38,6 +41,18 @@ export function AddIncomeForm() {
             className="w-full text-3xl font-black text-center border-3 border-ink rounded-md py-2 bg-white shadow-brutSm focus:outline-none tabular-nums"
           />
         </div>
+        {accounts.length > 0 && (
+          <div>
+            <Label htmlFor="iaccount">Cuenta destino</Label>
+            <Select id="iaccount" name="account_id" defaultValue={pichincha?.id ?? ''}>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.type === 'credit_card' ? '💳' : '🏦'} {a.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
         <div>
           <Label htmlFor="ireceived">Fecha</Label>
           <Input id="ireceived" name="received_at" type="date" required defaultValue={todayISO()} />

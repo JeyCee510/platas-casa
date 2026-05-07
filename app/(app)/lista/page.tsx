@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { formatUSD, formatDate } from '@/lib/format';
 import { isAdmin } from '@/lib/role';
 import { DeleteButton } from './DeleteButton';
+import { EditExpense } from './EditExpense';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export default async function ListaPage({ searchParams }: { searchParams: { cat?
 
   let query = supabase
     .from('expenses')
-    .select('id, amount, description, spent_at, category_id, source, needs_review')
+    .select('id, amount, description, spent_at, category_id, account_id, source, needs_review, is_deferred')
     .order('needs_review', { ascending: false })
     .order('spent_at', { ascending: false })
     .order('id', { ascending: false })
@@ -29,9 +30,10 @@ export default async function ListaPage({ searchParams }: { searchParams: { cat?
   if (searchParams.q) query = query.ilike('description', `%${searchParams.q}%`);
   if (limited && user) query = query.eq('created_by', user.id);
 
-  const [{ data: expenses }, { data: categories }] = await Promise.all([
+  const [{ data: expenses }, { data: categories }, { data: accounts }] = await Promise.all([
     query,
-    supabase.from('categories').select('*').order('id'),
+    supabase.from('categories').select('*').order('ord'),
+    supabase.from('accounts').select('id, type, name').order('type').order('name'),
   ]);
 
   const catMap = new Map((categories ?? []).map((c: any) => [c.id, c]));
@@ -89,6 +91,7 @@ export default async function ListaPage({ searchParams }: { searchParams: { cat?
                     <p className="text-[10px]">{formatDate(e.spent_at)} {sourceEmoji && `· ${sourceEmoji}`}{e.needs_review && ' · verificar'}</p>
                   </div>
                   <span className="font-black text-sm whitespace-nowrap">{formatUSD(Number(e.amount))}</span>
+                  <EditExpense expense={e as any} categories={(categories ?? []) as any} accounts={(accounts ?? []) as any} />
                   <DeleteButton id={e.id} />
                 </li>
               );

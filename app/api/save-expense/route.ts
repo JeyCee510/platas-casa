@@ -15,12 +15,12 @@ export async function POST(req: Request) {
   if (!body) return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
 
   const {
-    amount, description, category_id, spent_at, source,
+    amount, description, category_id, account_id, spent_at, source,
     receipt_url, needs_review, is_deferred,
-    // Vínculo Alex
     alex_link, alex_concepto_id, alex_es_extra,
   } = body as {
     amount: number; description: string | null; category_id: number | null;
+    account_id: number | null;
     spent_at: string; source: string;
     receipt_url: string | null; needs_review: boolean; is_deferred: boolean;
     alex_link?: boolean; alex_concepto_id?: number | null; alex_es_extra?: boolean;
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       currency: 'USD',
       description,
       category_id,
+      account_id,
       spent_at,
       source,
       receipt_url,

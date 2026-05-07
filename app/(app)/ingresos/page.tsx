@@ -6,15 +6,23 @@ import { formatUSD, formatDate, monthLabel } from '@/lib/format';
 import { listIncomes, totalIncomesMes, eliminarIngreso } from '@/lib/incomes';
 import { SOURCE_LABEL, SOURCE_EMOJI } from '@/lib/incomes-shared';
 import { AddIncomeForm } from './AddIncomeForm';
+import { EditIncome } from './EditIncome';
 
 export const dynamic = 'force-dynamic';
+
+async function getAccounts() {
+  const supabase = createClient();
+  const { data } = await supabase.from('accounts').select('id, type, name').order('type').order('name');
+  return data ?? [];
+}
 
 export default async function IngresosPage() {
   await createClient().auth.getUser();
   const today = new Date();
-  const [items, totalMes] = await Promise.all([
+  const [items, totalMes, accounts] = await Promise.all([
     listIncomes(),
     totalIncomesMes(today.getUTCFullYear(), today.getUTCMonth() + 1),
+    getAccounts(),
   ]);
 
   return (
@@ -43,7 +51,7 @@ export default async function IngresosPage() {
         </div>
       </Card>
 
-      <AddIncomeForm />
+      <AddIncomeForm accounts={accounts} />
 
       <Card tone="white" className="overflow-hidden">
         <div className="bg-bg border-b-3 border-ink px-3 py-1.5">
@@ -63,6 +71,7 @@ export default async function IngresosPage() {
                   <p className="text-[10px]">{formatDate(i.received_at)}</p>
                 </div>
                 <span className="font-black text-sm">{formatUSD(Number(i.amount))}</span>
+                <EditIncome income={i as any} accounts={accounts as any} />
                 <form action={eliminarIngreso}>
                   <input type="hidden" name="id" value={i.id} />
                   <button className="border-3 border-ink rounded-md w-8 h-8 bg-peach shadow-brutSm font-black text-sm">×</button>

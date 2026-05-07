@@ -18,6 +18,7 @@ type Category = {
 };
 
 type AlexConcept = { id: number; nombre: string; monto_tipo: number | null; es_extra_default: boolean };
+type Account = { id: number; type: 'credit_card' | 'bank_account'; name: string };
 
 const ALEX_SLUGS = new Set(['alex', 'iess-alex']);
 
@@ -26,7 +27,7 @@ const COLOR_BG: Record<string, string> = {
   lilac: 'bg-lilac', bubble: 'bg-bubble', teal: 'bg-teal',
 };
 
-export function AddExpenseForm({ categories, alexConcepts = [] }: { categories: Category[]; alexConcepts?: AlexConcept[] }) {
+export function AddExpenseForm({ categories, alexConcepts = [], accounts = [] }: { categories: Category[]; alexConcepts?: AlexConcept[]; accounts?: Account[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const source = params.get('source') ?? 'manual';
@@ -53,6 +54,9 @@ export function AddExpenseForm({ categories, alexConcepts = [] }: { categories: 
   const [isDeferred, setIsDeferred] = useState(false);
   const [alexConceptoId, setAlexConceptoId] = useState<string>('');
   const [alexEsExtra, setAlexEsExtra] = useState(false);
+  // Cuenta default Pichincha (id 3)
+  const pichincha = accounts.find((a) => a.name.toLowerCase() === 'pichincha');
+  const [accountId, setAccountId] = useState<string>(pichincha ? String(pichincha.id) : '');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -129,6 +133,7 @@ export function AddExpenseForm({ categories, alexConcepts = [] }: { categories: 
           amount: Number(amount),
           description: description || null,
           category_id: categoryId ? Number(categoryId) : null,
+          account_id: accountId ? Number(accountId) : null,
           spent_at: date,
           source: photo ? 'photo' : 'manual',
           receipt_url,
@@ -291,6 +296,25 @@ export function AddExpenseForm({ categories, alexConcepts = [] }: { categories: 
                 <span className="text-xs font-bold">Es extra (no cuenta al sueldo de $570)</span>
               </label>
             )}
+          </Card>
+        )}
+
+        {/* Cuenta de origen */}
+        {accounts.length > 0 && (
+          <Card tone="white" className="p-3">
+            <Label htmlFor="account">Cuenta (de dónde sale el dinero)</Label>
+            <select
+              id="account"
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              className="w-full border-3 border-ink rounded-md px-3 py-2 bg-white shadow-brutSm font-bold"
+            >
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.type === 'credit_card' ? '💳' : '🏦'} {a.name}
+                </option>
+              ))}
+            </select>
           </Card>
         )}
 

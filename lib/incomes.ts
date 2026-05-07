@@ -40,17 +40,42 @@ export async function crearIngreso(formData: FormData) {
 
   const source = String(formData.get('source')) as IncomeSource;
   const amount = Number(formData.get('amount'));
+  const accountIdRaw = String(formData.get('account_id') ?? '');
+  const accountId = accountIdRaw ? Number(accountIdRaw) : null;
   const description = String(formData.get('description') ?? '').trim() || null;
   const receivedAt = String(formData.get('received_at') ?? new Date().toISOString().slice(0, 10));
   if (!source || !amount) throw new Error('Datos incompletos');
 
   const { error } = await supabase.from('incomes').insert({
     source, amount, description, received_at: receivedAt,
+    account_id: accountId,
     created_by: user.id, currency: 'USD',
   });
   if (error) throw error;
   revalidatePath('/');
   revalidatePath('/ingresos');
+  revalidatePath('/cuentas');
+}
+
+export async function actualizarIngreso(formData: FormData) {
+  const supabase = createClient();
+  const id = Number(formData.get('id'));
+  if (!id) throw new Error('ID requerido');
+
+  const source = String(formData.get('source')) as IncomeSource;
+  const amount = Number(formData.get('amount'));
+  const accountIdRaw = String(formData.get('account_id') ?? '');
+  const accountId = accountIdRaw ? Number(accountIdRaw) : null;
+  const description = String(formData.get('description') ?? '').trim() || null;
+  const receivedAt = String(formData.get('received_at'));
+
+  const { error } = await supabase.from('incomes').update({
+    source, amount, description, received_at: receivedAt, account_id: accountId,
+  }).eq('id', id);
+  if (error) throw error;
+  revalidatePath('/');
+  revalidatePath('/ingresos');
+  revalidatePath('/cuentas');
 }
 
 export async function eliminarIngreso(formData: FormData) {
