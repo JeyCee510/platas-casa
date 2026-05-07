@@ -57,6 +57,8 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
   // Cuenta default Pichincha (id 3)
   const pichincha = accounts.find((a) => a.name.toLowerCase() === 'pichincha');
   const [accountId, setAccountId] = useState<string>(pichincha ? String(pichincha.id) : '');
+  // Comisión bancaria
+  const [bankCommission, setBankCommission] = useState<number>(0);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -139,6 +141,7 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
           receipt_url,
           needs_review: needsReview,
           is_deferred: isDeferred,
+          bank_commission: bankCommission || 0,
           alex_link: isAlexLink,
           alex_concepto_id: isAlexLink ? Number(alexConceptoId) : null,
           alex_es_extra: alexEsExtra,
@@ -345,7 +348,41 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
           </Card>
         )}
 
-        {/* Diferida + Fecha + Desc */}
+        {/* Fecha (siempre visible) */}
+        <Card tone="white" className="p-3">
+          <Label htmlFor="date-field">📅 Fecha</Label>
+          <Input id="date-field" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <p className="text-[10px] font-bold uppercase mt-1 text-ink/70">{dateLabel}</p>
+        </Card>
+
+        {/* Comisión bancaria */}
+        <Card tone="white" className="p-3 space-y-2">
+          <p className="text-xs font-black uppercase">🏦 Comisión bancaria</p>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setBankCommission(0)}
+              className={`border-3 border-ink rounded-md py-2 text-xs font-bold ${bankCommission === 0 ? 'bg-mint shadow-brutSm' : 'bg-white'}`}
+            >Sin comisión</button>
+            <button
+              type="button"
+              onClick={() => setBankCommission(0.31)}
+              className={`border-3 border-ink rounded-md py-2 text-xs font-bold ${bankCommission === 0.31 ? 'bg-lemon shadow-brutSm' : 'bg-white'}`}
+            >$0.31</button>
+            <button
+              type="button"
+              onClick={() => setBankCommission(0.41)}
+              className={`border-3 border-ink rounded-md py-2 text-xs font-bold ${bankCommission === 0.41 ? 'bg-lemon shadow-brutSm' : 'bg-white'}`}
+            >$0.41</button>
+          </div>
+          {bankCommission > 0 && amount && (
+            <p className="text-[10px] font-bold uppercase text-ink/70">
+              Total que sale del banco: ${(Number(amount) + bankCommission).toFixed(2)}
+            </p>
+          )}
+        </Card>
+
+        {/* Compra diferida + Nota */}
         <Card tone="white" className="p-3 space-y-2">
           <label className="flex items-center gap-2">
             <input
@@ -356,15 +393,6 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
             />
             <span className="text-sm font-bold">💳 Compra diferida (en cuotas)</span>
           </label>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase">Fecha:</span>
-            <button type="button" onClick={() => setShowDate(!showDate)} className="text-xs underline font-bold">
-              {dateLabel} · cambiar
-            </button>
-          </div>
-          {showDate && (
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          )}
           <div>
             <Label htmlFor="desc-field">📝 Nota / detalle</Label>
             <Textarea id="desc-field" rows={2} placeholder="Lo que sea útil recordar después" value={description} onChange={(e) => setDescription(e.target.value)} />

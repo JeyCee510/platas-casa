@@ -43,6 +43,7 @@ export function EditIncome({ income, accounts }: { income: Income; accounts: Acc
               <Select name="source" required defaultValue={income.source}>
                 <option value="aporte_jc">👨 Aporte JC</option>
                 <option value="aporte_ac">👩 Aporte AC</option>
+                <option value="intereses">📈 Intereses</option>
                 <option value="otros">💵 Otros</option>
               </Select>
             </div>

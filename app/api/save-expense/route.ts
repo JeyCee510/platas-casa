@@ -16,13 +16,14 @@ export async function POST(req: Request) {
 
   const {
     amount, description, category_id, account_id, spent_at, source,
-    receipt_url, needs_review, is_deferred,
+    receipt_url, needs_review, is_deferred, bank_commission,
     alex_link, alex_concepto_id, alex_es_extra,
   } = body as {
     amount: number; description: string | null; category_id: number | null;
     account_id: number | null;
     spent_at: string; source: string;
     receipt_url: string | null; needs_review: boolean; is_deferred: boolean;
+    bank_commission?: number;
     alex_link?: boolean; alex_concepto_id?: number | null; alex_es_extra?: boolean;
   };
 
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       receipt_url,
       needs_review,
       is_deferred,
+      bank_commission: bank_commission ?? 0,
     })
     .select('id')
     .single();

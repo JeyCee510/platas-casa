@@ -25,6 +25,7 @@ export function AddIncomeForm({ accounts = [] }: { accounts?: Account[] }) {
           <Select id="source" name="source" required defaultValue="aporte_jc">
             <option value="aporte_jc">👨 Aporte JC</option>
             <option value="aporte_ac">👩 Aporte AC</option>
+            <option value="intereses">📈 Intereses</option>
             <option value="otros">💵 Otros</option>
           </Select>
         </div>
