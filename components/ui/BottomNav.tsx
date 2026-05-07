@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 
 const tabsAdmin = [
   { href: '/',          label: 'Inicio',  emoji: '🏠' },
-  { href: '/lista',     label: 'Lista',   emoji: '📋' },
+  { href: '/ingresos',  label: 'Ingresos', emoji: '💰' },
   { href: '/agregar',   label: 'Gasto',   emoji: '➕', primary: true },
   { href: '/cuentas',   label: 'Cuentas', emoji: '💳' },
   { href: '/alex',      label: 'Alex',    emoji: '👷' },

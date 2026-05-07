@@ -17,16 +17,20 @@ export function TopBar({ user }: { user?: { email?: string | null; user_metadata
 
   return (
     <header className="sticky top-0 z-30 border-b-3 border-ink bg-mint">
-      <div className="max-w-2xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
-        <Link href="/" className="font-black text-base sm:text-xl tracking-tight">
-          PLATAS·CASA
+      <div className="max-w-2xl mx-auto px-4 pt-3 pb-3 flex items-end justify-between gap-2">
+        <Link
+          href="/"
+          className="inline-block bg-white border-3 border-ink rounded-md px-3 py-1.5 shadow-brut hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-brutSm transition-transform"
+        >
+          <span className="font-black text-2xl sm:text-3xl tracking-tight leading-none block">
+            PLATAS·CASA
+          </span>
         </Link>
-        <div className="flex items-center gap-2">
-          {name && <span className="text-sm font-bold">{name}</span>}
+        <div className="flex items-center gap-2 pb-1">
+          {name && <span className="text-sm font-black">{name}</span>}
           <button
             onClick={logout}
             className="px-2.5 py-1 border-3 border-ink rounded-md font-bold text-xs bg-peach shadow-brutSm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-            aria-label="Cerrar sesión"
           >
             Salir
           </button>

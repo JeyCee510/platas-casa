@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { formatUSD, formatDate, monthLabel } from '@/lib/format';
 import { userShortName } from '@/lib/userName';
 import { isAdmin } from '@/lib/role';
+import { totalIncomesMes } from '@/lib/incomes';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,12 +72,14 @@ export default async function DashboardPage() {
     { data: categories },
     { data: recent },
     { data: accounts },
+    incomesMes,
   ] = await Promise.all([
     supabase.from('expenses').select('amount, category_id, spent_at').gte('spent_at', startOfMonth.toISOString().slice(0, 10)),
     supabase.from('expenses').select('amount').gte('spent_at', startOfPrevMonth.toISOString().slice(0, 10)).lt('spent_at', startOfMonth.toISOString().slice(0, 10)),
     supabase.from('categories').select('*').order('ord'),
     supabase.from('expenses').select('id, amount, description, spent_at, category_id, source, needs_review, is_deferred').order('spent_at', { ascending: false }).order('id', { ascending: false }).limit(4),
     supabase.from('accounts').select('id, type, name, balance, due_date').order('type').order('name'),
+    totalIncomesMes(today.getFullYear(), today.getMonth() + 1),
   ]);
 
   const totalMonth = (monthExpenses ?? []).reduce((s, e: any) => s + Number(e.amount), 0);
@@ -130,22 +133,25 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      {/* Balance del mes: ingresos vs gastos */}
       <Card tone="white" className="p-4">
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
-            <p className="text-[10px] font-bold uppercase">Mes</p>
-            <p className="text-xl font-black leading-tight">{formatUSD(totalMonth)}</p>
-            {diff !== 0 && <p className="text-[10px] font-bold mt-0.5">{diff >= 0 ? '↑' : '↓'} {Math.abs(diff).toFixed(0)}%</p>}
+            <p className="text-[10px] font-bold uppercase">Ingresos</p>
+            <p className="text-xl font-black leading-tight text-green-700">+{formatUSD(incomesMes.total ?? 0)}</p>
+            <Link href="/ingresos" className="text-[10px] font-bold underline mt-0.5 inline-block">Detalle →</Link>
           </div>
           <div className="border-x-3 border-ink">
             <p className="text-[10px] font-bold uppercase">Gastos</p>
-            <p className="text-xl font-black leading-tight">{count}</p>
-            <p className="text-[10px] font-bold mt-0.5">registrados</p>
+            <p className="text-xl font-black leading-tight text-red-700">−{formatUSD(totalMonth)}</p>
+            <p className="text-[10px] font-bold mt-0.5">{count} mov</p>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase">Promedio</p>
-            <p className="text-xl font-black leading-tight">{count > 0 ? formatUSD(totalMonth / count) : '$0'}</p>
-            <p className="text-[10px] font-bold mt-0.5">por gasto</p>
+            <p className="text-[10px] font-bold uppercase">Balance</p>
+            <p className={`text-xl font-black leading-tight ${(incomesMes.total ?? 0) - totalMonth >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              {formatUSD((incomesMes.total ?? 0) - totalMonth)}
+            </p>
+            <p className="text-[10px] font-bold mt-0.5">del mes</p>
           </div>
         </div>
       </Card>

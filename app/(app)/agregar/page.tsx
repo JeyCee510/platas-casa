@@ -6,10 +6,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function AgregarPage() {
   const supabase = createClient();
-  const { data: categories } = await supabase.from('categories').select('*').order('id');
+  const [{ data: categories }, { data: alexConcepts }] = await Promise.all([
+    supabase.from('categories').select('*').order('id'),
+    supabase.from('alex_concepts').select('id, nombre, activo, monto_tipo, es_extra_default, orden').eq('activo', true).order('orden'),
+  ]);
   return (
     <Suspense>
-      <AddExpenseForm categories={categories ?? []} />
+      <AddExpenseForm categories={categories ?? []} alexConcepts={alexConcepts ?? []} />
     </Suspense>
   );
 }

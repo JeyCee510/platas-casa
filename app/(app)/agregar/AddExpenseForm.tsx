@@ -17,12 +17,16 @@ type Category = {
   ord: number;
 };
 
+type AlexConcept = { id: number; nombre: string; monto_tipo: number | null; es_extra_default: boolean };
+
+const ALEX_SLUGS = new Set(['alex', 'iess-alex']);
+
 const COLOR_BG: Record<string, string> = {
   mint: 'bg-mint', sky: 'bg-sky', peach: 'bg-peach', lemon: 'bg-lemon',
   lilac: 'bg-lilac', bubble: 'bg-bubble', teal: 'bg-teal',
 };
 
-export function AddExpenseForm({ categories }: { categories: Category[] }) {
+export function AddExpenseForm({ categories, alexConcepts = [] }: { categories: Category[]; alexConcepts?: AlexConcept[] }) {
   const router = useRouter();
   const params = useSearchParams();
   const source = params.get('source') ?? 'manual';
@@ -47,6 +51,8 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
   const [categoryId, setCategoryId] = useState<string>('');
   const [description, setDescription] = useState('');
   const [isDeferred, setIsDeferred] = useState(false);
+  const [alexConceptoId, setAlexConceptoId] = useState<string>('');
+  const [alexEsExtra, setAlexEsExtra] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -113,19 +119,29 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
         receipt_url = path;
       }
 
-      const { error: insErr } = await supabase.from('expenses').insert({
-        created_by: user.id,
-        amount: Number(amount),
-        currency: 'USD',
-        description: description || null,
-        category_id: categoryId ? Number(categoryId) : null,
-        spent_at: date,
-        source: photo ? 'photo' : 'manual',
-        receipt_url,
-        needs_review: needsReview,
-        is_deferred: isDeferred,
+      const selectedSub = categories.find((c) => String(c.id) === categoryId);
+      const isAlexLink = !!selectedSub && ALEX_SLUGS.has(selectedSub.slug) && !!alexConceptoId;
+
+      const res = await fetch('/api/save-expense', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Number(amount),
+          description: description || null,
+          category_id: categoryId ? Number(categoryId) : null,
+          spent_at: date,
+          source: photo ? 'photo' : 'manual',
+          receipt_url,
+          needs_review: needsReview,
+          is_deferred: isDeferred,
+          alex_link: isAlexLink,
+          alex_concepto_id: isAlexLink ? Number(alexConceptoId) : null,
+          alex_es_extra: alexEsExtra,
+        }),
       });
-      if (insErr) throw insErr;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error guardando gasto');
+      if (data.warning) alert(data.warning);
 
       router.push('/');
       router.refresh();
@@ -142,6 +158,7 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
 
   const selectedSub = categories.find((c) => String(c.id) === categoryId);
   const activeSubs = activeGroupId ? subsByGroup.get(activeGroupId) ?? [] : [];
+  const showAlexLink = !!selectedSub && ALEX_SLUGS.has(selectedSub.slug);
 
   return (
     <div className="space-y-3">
@@ -243,6 +260,39 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
             </div>
           )}
         </Card>
+
+        {/* Sub-form Alex: aparece cuando subcategoría es Alex / IESS Alex */}
+        {showAlexLink && (
+          <Card tone="bubble" className="p-3 space-y-2">
+            <p className="text-xs font-black uppercase">🔗 Vincular a Platas Alex</p>
+            <p className="text-[10px]">Este gasto se registrará también como pago en el módulo Alex.</p>
+            <div>
+              <Label htmlFor="alex-concept">Concepto en Alex</Label>
+              <select
+                id="alex-concept"
+                value={alexConceptoId}
+                onChange={(e) => setAlexConceptoId(e.target.value)}
+                className="w-full border-3 border-ink rounded-md px-2 py-2 bg-white shadow-brutSm font-bold"
+              >
+                <option value="">— no vincular —</option>
+                {alexConcepts.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nombre}{c.monto_tipo ? ` · $${c.monto_tipo}` : ''}</option>
+                ))}
+              </select>
+            </div>
+            {alexConceptoId && (
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={alexEsExtra}
+                  onChange={(e) => setAlexEsExtra(e.target.checked)}
+                  className="w-5 h-5 border-3 border-ink"
+                />
+                <span className="text-xs font-bold">Es extra (no cuenta al sueldo de $570)</span>
+              </label>
+            )}
+          </Card>
+        )}
 
         {/* Diferida + Fecha + Desc */}
         <Card tone="white" className="p-3 space-y-2">
