@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const tabs = [
+const tabsAdmin = [
   { href: '/',          label: 'Inicio',  emoji: '🏠' },
   { href: '/lista',     label: 'Lista',   emoji: '📋' },
   { href: '/agregar',   label: 'Gasto',   emoji: '➕', primary: true },
@@ -10,14 +10,21 @@ const tabs = [
   { href: '/reporte',   label: 'Reporte', emoji: '📊' },
 ];
 
-export function BottomNav() {
+const tabsLimited = [
+  { href: '/',          label: 'Inicio',  emoji: '🏠' },
+  { href: '/lista',     label: 'Mis',     emoji: '📋' },
+  { href: '/agregar',   label: 'Gasto',   emoji: '➕', primary: true },
+];
+
+export function BottomNav({ role = 'admin' }: { role?: 'admin' | 'limited' }) {
   const pathname = usePathname();
+  const tabs = role === 'limited' ? tabsLimited : tabsAdmin;
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-40 border-t-3 border-ink bg-mint shadow-[0_-4px_0_0_#0A0A0A]"
       aria-label="Navegación principal"
     >
-      <ul className="grid grid-cols-5 max-w-2xl mx-auto">
+      <ul className={`grid ${tabs.length === 5 ? 'grid-cols-5' : 'grid-cols-3'} max-w-2xl mx-auto`}>
         {tabs.map((t) => {
           const active = pathname === t.href || (t.href !== '/' && pathname.startsWith(t.href));
           if (t.primary) {

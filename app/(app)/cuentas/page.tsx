@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { formatUSD, formatDate, monthLabel } from '@/lib/format';
+import { isAdmin } from '@/lib/role';
 import { AccountRow } from './AccountRow';
 import { AddAccountForm } from './AddAccountForm';
 
@@ -10,6 +12,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function CuentasPage() {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!isAdmin(user)) redirect('/');
   const { data: accounts } = await supabase
     .from('accounts')
     .select('id, type, name, balance, due_date, notes, updated_at, updated_by')

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -7,7 +7,15 @@ import { Input, Textarea, Label } from '@/components/ui/Input';
 import { createClient } from '@/lib/supabase/client';
 import { todayISO } from '@/lib/format';
 
-type Category = { id: number; slug: string; name: string; emoji: string | null; color: string };
+type Category = {
+  id: number;
+  slug: string;
+  name: string;
+  emoji: string | null;
+  color: string;
+  parent_id: number | null;
+  ord: number;
+};
 
 const COLOR_BG: Record<string, string> = {
   mint: 'bg-mint', sky: 'bg-sky', peach: 'bg-peach', lemon: 'bg-lemon',
@@ -17,13 +25,28 @@ const COLOR_BG: Record<string, string> = {
 export function AddExpenseForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const params = useSearchParams();
-  const source = params.get('source') ?? 'manual'; // manual | foto | voz
+  const source = params.get('source') ?? 'manual';
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Separar grupos y subcategorías
+  const groups = useMemo(() => categories.filter((c) => c.parent_id === null).sort((a, b) => a.ord - b.ord), [categories]);
+  const subsByGroup = useMemo(() => {
+    const m = new Map<number, Category[]>();
+    categories.filter((c) => c.parent_id !== null).forEach((c) => {
+      const list = m.get(c.parent_id!) ?? [];
+      list.push(c);
+      m.set(c.parent_id!, list);
+    });
+    m.forEach((list) => list.sort((a, b) => a.ord - b.ord));
+    return m;
+  }, [categories]);
 
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(todayISO());
+  const [activeGroupId, setActiveGroupId] = useState<number | null>(null);
   const [categoryId, setCategoryId] = useState<string>('');
   const [description, setDescription] = useState('');
+  const [isDeferred, setIsDeferred] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -33,7 +56,6 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
   const [error, setError] = useState<string | null>(null);
   const [showDate, setShowDate] = useState(false);
 
-  // Auto-abrir cámara al entrar con source=foto
   useEffect(() => {
     if (source === 'foto') {
       setTimeout(() => fileRef.current?.click(), 100);
@@ -47,22 +69,22 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
   }
 
   async function parsePhoto(file: File) {
-    setParsing(true);
-    setError(null);
-    setAiQuestion(null);
+    setParsing(true); setError(null); setAiQuestion(null);
     try {
       const fd = new FormData();
       fd.append('file', file);
       const res = await fetch('/api/parse-receipt', { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error procesando foto');
-
       if (data.amount) setAmount(String(data.amount));
       if (data.date) setDate(data.date);
       if (data.description) setDescription(data.description);
       if (data.category_slug) {
         const c = categories.find((x) => x.slug === data.category_slug);
-        if (c) setCategoryId(String(c.id));
+        if (c) {
+          setCategoryId(String(c.id));
+          if (c.parent_id) setActiveGroupId(c.parent_id);
+        }
       }
       if (data.confidence !== 'alta' || data.question) setNeedsReview(true);
       if (data.question) setAiQuestion(data.question);
@@ -76,8 +98,7 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
+    setSaving(true); setError(null);
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -99,9 +120,10 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
         description: description || null,
         category_id: categoryId ? Number(categoryId) : null,
         spent_at: date,
-        source: photo ? 'photo' : (source === 'voz' ? 'voice' : 'manual'),
+        source: photo ? 'photo' : 'manual',
         receipt_url,
         needs_review: needsReview,
+        is_deferred: isDeferred,
       });
       if (insErr) throw insErr;
 
@@ -118,13 +140,16 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
     date === new Date(Date.now() - 86400000).toISOString().slice(0, 10) ? 'Ayer' :
     new Date(date).toLocaleDateString('es', { day: '2-digit', month: 'short' });
 
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-black">Nuevo gasto</h1>
+  const selectedSub = categories.find((c) => String(c.id) === categoryId);
+  const activeSubs = activeGroupId ? subsByGroup.get(activeGroupId) ?? [] : [];
 
-      {/* Foto preview / botón si source=foto o quieren agregar */}
+  return (
+    <div className="space-y-3">
+      <h1 className="text-xl font-black">Nuevo gasto</h1>
+
+      {/* Foto */}
       {(source === 'foto' || photo) && (
-        <Card tone="lemon" className="p-4">
+        <Card tone="lemon" className="p-3">
           <input
             ref={fileRef}
             type="file"
@@ -138,31 +163,28 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
           />
           {!photo ? (
             <Button type="button" variant="secondary" full onClick={() => fileRef.current?.click()}>
-              📸 Tomar foto de boleta
+              📸 Tomar foto
             </Button>
           ) : (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photoPreview!} alt="boleta" className="max-h-40 mx-auto border-3 border-ink rounded-md shadow-brutSm" />
+              <img src={photoPreview!} alt="boleta" className="max-h-32 mx-auto border-3 border-ink rounded-md shadow-brutSm" />
               <p className="text-xs font-bold mt-2 text-center">
-                {parsing ? '🔍 Leyendo boleta...' : '✨ Datos extraídos. Revisa abajo.'}
+                {parsing ? '🔍 Leyendo…' : '✨ Datos extraídos'}
               </p>
               {aiQuestion && (
                 <Card tone="peach" className="p-2 mt-2">
                   <p className="text-xs font-bold">🤔 {aiQuestion}</p>
                 </Card>
               )}
-              <button type="button" onClick={() => fileRef.current?.click()} className="mt-2 text-xs underline font-bold w-full text-center">
-                Cambiar foto
-              </button>
             </>
           )}
         </Card>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Monto gigante */}
-        <Card tone="white" className="p-4">
+        <Card tone="white" className="p-3">
           <Label htmlFor="amount">Monto (USD)</Label>
           <input
             id="amount"
@@ -173,37 +195,68 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full text-4xl font-black text-center border-3 border-ink rounded-md py-3 bg-bg shadow-brutSm focus:outline-none focus:translate-x-[1px] focus:translate-y-[1px] focus:shadow-none transition-transform tabular-nums"
+            className="w-full text-4xl font-black text-center border-3 border-ink rounded-md py-2 bg-bg shadow-brutSm focus:outline-none tabular-nums"
             autoFocus={source === 'manual'}
           />
         </Card>
 
-        {/* Categorías como chips */}
-        <Card tone="white" className="p-4">
-          <Label>Categoría</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {categories.map((c) => {
-              const selected = categoryId === String(c.id);
-              const bg = selected ? (COLOR_BG[c.color] ?? 'bg-sky') : 'bg-white';
+        {/* Categoría: grupos + subcategorías */}
+        <Card tone="white" className="p-3">
+          <Label>Categoría {selectedSub && <span className="text-xs">→ {selectedSub.emoji} {selectedSub.name}</span>}</Label>
+
+          {/* Grupos */}
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            {groups.map((g) => {
+              const active = activeGroupId === g.id;
+              const bg = active ? (COLOR_BG[g.color] ?? 'bg-sky') : 'bg-white';
               return (
                 <button
-                  key={c.id}
+                  key={g.id}
                   type="button"
-                  onClick={() => setCategoryId(String(c.id))}
-                  className={`border-3 border-ink rounded-md px-2 py-3 font-bold text-xs ${bg} ${selected ? 'shadow-brutSm' : 'opacity-80'} active:translate-x-[1px] active:translate-y-[1px]`}
+                  onClick={() => { setActiveGroupId(active ? null : g.id); }}
+                  className={`border-3 border-ink rounded-md px-2 py-2 font-bold text-xs ${bg} ${active ? 'shadow-brutSm' : 'opacity-80'} active:translate-x-[1px] active:translate-y-[1px]`}
                 >
-                  <div className="text-2xl mb-0.5">{c.emoji}</div>
-                  <div className="leading-tight">{c.name}</div>
+                  <div className="text-xl">{g.emoji}</div>
+                  <div className="text-[10px] leading-tight">{g.name}</div>
                 </button>
               );
             })}
           </div>
+
+          {/* Subcategorías del grupo activo */}
+          {activeGroupId && (
+            <div className="border-t-3 border-ink pt-2 grid grid-cols-2 gap-1.5">
+              {activeSubs.map((s) => {
+                const selected = categoryId === String(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setCategoryId(String(s.id))}
+                    className={`border-3 border-ink rounded-md px-2 py-1.5 text-left text-xs font-bold ${selected ? 'bg-lemon shadow-brutSm' : 'bg-white'} active:translate-x-[1px] active:translate-y-[1px]`}
+                  >
+                    <span className="mr-1">{s.emoji}</span>
+                    <span>{s.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </Card>
 
-        {/* Fecha y descripción colapsadas */}
-        <Card tone="white" className="p-4 space-y-3">
+        {/* Diferida + Fecha + Desc */}
+        <Card tone="white" className="p-3 space-y-2">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isDeferred}
+              onChange={(e) => setIsDeferred(e.target.checked)}
+              className="w-5 h-5 border-3 border-ink"
+            />
+            <span className="text-sm font-bold">💳 Compra diferida (en cuotas)</span>
+          </label>
           <div className="flex items-center justify-between">
-            <Label>Fecha</Label>
+            <span className="text-xs font-bold uppercase">Fecha:</span>
             <button type="button" onClick={() => setShowDate(!showDate)} className="text-xs underline font-bold">
               {dateLabel} · cambiar
             </button>
@@ -211,30 +264,25 @@ export function AddExpenseForm({ categories }: { categories: Category[] }) {
           {showDate && (
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           )}
-          <div>
-            <Label htmlFor="desc">Descripción (opcional)</Label>
-            <Textarea id="desc" rows={2} placeholder="Ej: Jumbo Costanera" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
+          <Textarea rows={2} placeholder="Descripción (opcional)" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Card>
 
-        {/* Flag verificar */}
-        <label className="flex items-center gap-2 px-2">
+        {/* Verificar */}
+        <label className="flex items-center gap-2 px-1">
           <input
             type="checkbox"
             checked={needsReview}
             onChange={(e) => setNeedsReview(e.target.checked)}
             className="w-5 h-5 border-3 border-ink"
           />
-          <span className="text-sm font-bold">🔍 Marcar como "verificar"</span>
+          <span className="text-xs font-bold">🔍 Marcar como "verificar"</span>
         </label>
 
         {error && <p className="text-sm font-bold text-red-700 px-2">{error}</p>}
 
-        <div className="flex gap-2 sticky bottom-24">
-          <Button type="submit" full disabled={saving || !amount}>
-            {saving ? 'Guardando…' : '💾 Guardar gasto'}
-          </Button>
-        </div>
+        <Button type="submit" full disabled={saving || !amount}>
+          {saving ? 'Guardando…' : '💾 Guardar gasto'}
+        </Button>
       </form>
     </div>
   );

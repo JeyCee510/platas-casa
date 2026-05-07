@@ -1,15 +1,21 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { formatUSD, formatDate } from '@/lib/format';
+import { isAdmin } from '@/lib/role';
 import { DeleteButton } from './DeleteButton';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ListaPage({ searchParams }: { searchParams: { cat?: string; q?: string } }) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  // Limited (Ana): solo ve sus propios gastos como simple lista, sin montos detallados
+  const limited = !isAdmin(user);
+
 
   let query = supabase
     .from('expenses')
@@ -21,6 +27,7 @@ export default async function ListaPage({ searchParams }: { searchParams: { cat?
 
   if (searchParams.cat) query = query.eq('category_id', Number(searchParams.cat));
   if (searchParams.q) query = query.ilike('description', `%${searchParams.q}%`);
+  if (limited && user) query = query.eq('created_by', user.id);
 
   const [{ data: expenses }, { data: categories }] = await Promise.all([
     query,
