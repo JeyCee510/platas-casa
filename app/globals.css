@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background: #E8F1FF; color: #0A0A0A; }
+
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Scrollbar discreta */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #0A0A0A; border-radius: 6px; }
