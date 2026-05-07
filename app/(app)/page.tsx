@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatUSD, formatDate, monthLabel, fullDateLabel } from '@/lib/format';
 import { userShortName } from '@/lib/userName';
-import { isAdmin } from '@/lib/role';
+import { hasFullView } from '@/lib/role';
 import { totalIncomesMes } from '@/lib/incomes';
 
 export const dynamic = 'force-dynamic';
@@ -12,14 +12,14 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const admin = isAdmin(user);
+  const fullView = hasFullView(user);
 
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const greeting = userShortName(user) ? `Hola, ${userShortName(user)}` : 'Hola';
 
-  // Vista LIMITED (Ana): solo CTAs grandes y total general del mes, sin detalle
-  if (!admin) {
+  // Vista LIMITED: solo CTAs grandes y total general del mes, sin detalle
+  if (!fullView) {
     const { data: monthExpenses } = await supabase
       .from('expenses').select('amount').gte('spent_at', startOfMonth.toISOString().slice(0, 10));
     const totalMonth = (monthExpenses ?? []).reduce((s, e: any) => s + Number(e.amount), 0);
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
     );
   }
 
-  // Vista ADMIN (Juan): completo
+  // Vista FULL VIEW (admin / full / readonly)
   const startOfPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
   const [
     { data: monthExpenses },

@@ -17,8 +17,9 @@ const tabsLimited = [
   { href: '/alex',      label: 'Alex',    emoji: '👷' },
 ];
 
-export function BottomNav({ role = 'admin' }: { role?: 'admin' | 'limited' }) {
+export function BottomNav({ role = 'admin' }: { role?: 'admin' | 'full' | 'limited' | 'readonly' }) {
   const pathname = usePathname();
+  // limited tiene nav reducido; admin/full/readonly ven todo
   const tabs = role === 'limited' ? tabsLimited : tabsAdmin;
   return (
     <nav

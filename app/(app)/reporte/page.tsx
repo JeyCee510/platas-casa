@@ -4,14 +4,14 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatUSD, monthLabel } from '@/lib/format';
 import { CategoryChart } from '@/components/CategoryChart';
-import { isAdmin } from '@/lib/role';
+import { hasFullView } from '@/lib/role';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ReportePage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!isAdmin(user)) redirect('/');
+  if (!hasFullView(user)) redirect('/');
 
   const today = new Date();
   const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1);

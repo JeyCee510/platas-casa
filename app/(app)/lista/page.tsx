@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { formatUSD, formatDate } from '@/lib/format';
-import { isAdmin } from '@/lib/role';
+import { hasFullView } from '@/lib/role';
 import { DeleteButton } from './DeleteButton';
 import { EditExpense } from './EditExpense';
 
@@ -14,8 +14,8 @@ export const dynamic = 'force-dynamic';
 export default async function ListaPage({ searchParams }: { searchParams: { cat?: string; q?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  // Limited (Ana): solo ve sus propios gastos como simple lista, sin montos detallados
-  const limited = !isAdmin(user);
+  // Limited solo ve sus propios gastos. Otros roles ven todos.
+  const limited = !hasFullView(user);
 
 
   let query = supabase
