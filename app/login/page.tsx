@@ -90,7 +90,7 @@ export default function LoginPage() {
               </p>
             </Card>
             <div>
-              <Label htmlFor="code">Código (6 dígitos)</Label>
+              <Label htmlFor="code">Código (6-8 dígitos)</Label>
               <input
                 ref={codeRef}
                 id="code"
@@ -99,15 +99,15 @@ export default function LoginPage() {
                 autoComplete="one-time-code"
                 pattern="[0-9]*"
                 required
-                placeholder="000000"
+                placeholder="00000000"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 8))}
                 className="w-full text-3xl font-black text-center border-3 border-ink rounded-md py-3 bg-white shadow-brutSm focus:outline-none tabular-nums tracking-widest"
-                maxLength={6}
+                maxLength={8}
               />
             </div>
             {error && <p className="text-sm font-bold text-red-700">{error}</p>}
-            <Button type="submit" full disabled={loading || code.length !== 6}>
+            <Button type="submit" full disabled={loading || code.length < 6}>
               {loading ? 'Verificando…' : 'Entrar'}
             </Button>
             <button
