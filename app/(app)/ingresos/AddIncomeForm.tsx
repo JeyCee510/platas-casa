@@ -34,9 +34,9 @@ export function AddIncomeForm({ accounts = [] }: { accounts?: Account[] }) {
           <input
             id="iamount"
             name="amount"
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="0.01"
+            pattern="[0-9]*[.,]?[0-9]*"
             required
             placeholder="0.00"
             className="w-full text-3xl font-black text-center border-3 border-ink rounded-md py-2 bg-white shadow-brutSm focus:outline-none tabular-nums"

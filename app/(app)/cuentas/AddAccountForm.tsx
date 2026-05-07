@@ -65,7 +65,7 @@ export function AddAccountForm() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <Label htmlFor="bal">{type === 'credit_card' ? 'Monto pendiente' : 'Saldo disponible'} (USD)</Label>
-            <Input id="bal" type="number" inputMode="decimal" step="0.01" value={balance} onChange={(e) => setBalance(e.target.value)} />
+            <Input id="bal" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" value={balance} onChange={(e) => setBalance(e.target.value.replace(',', '.'))} />
           </div>
           {type === 'credit_card' && (
             <div>

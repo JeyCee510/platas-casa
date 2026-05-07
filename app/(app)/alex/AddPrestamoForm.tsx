@@ -20,7 +20,7 @@ export function AddPrestamoForm() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="pmonto">Monto (USD)</Label>
-            <Input id="pmonto" name="monto" type="number" inputMode="decimal" step="0.01" required placeholder="200" />
+            <Input id="pmonto" name="monto" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" required placeholder="200" />
           </div>
           <div>
             <Label htmlFor="pcuotas">Cuotas</Label>

@@ -72,11 +72,11 @@ export function AccountRow({ account, showDueDate }: { account: Account; showDue
           <Label htmlFor={`bal-${account.id}`}>{account.type === 'credit_card' ? 'Monto pendiente' : 'Saldo disponible'} (USD)</Label>
           <Input
             id={`bal-${account.id}`}
-            type="number"
+            type="text"
             inputMode="decimal"
-            step="0.01"
+            pattern="[0-9]*[.,]?[0-9]*"
             value={balance}
-            onChange={(e) => setBalance(e.target.value)}
+            onChange={(e) => setBalance(e.target.value.replace(',', '.'))}
           />
         </div>
         {showDueDate && (

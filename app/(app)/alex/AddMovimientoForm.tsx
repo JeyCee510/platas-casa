@@ -41,11 +41,11 @@ export function AddMovimientoForm({ concepts, fechaDefault }: { concepts: Concep
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="monto">Monto (USD)</Label>
-            <Input id="monto" name="monto" type="number" inputMode="decimal" step="0.01" required value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0.00" />
+            <Input id="monto" name="monto" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" required value={monto} onChange={(e) => setMonto(e.target.value.replace(',', '.'))} placeholder="0.00" />
           </div>
           <div>
             <Label htmlFor="cantidad">Cantidad (opc)</Label>
-            <Input id="cantidad" name="cantidad" type="number" inputMode="decimal" step="0.5" placeholder="ej: 3 noches" />
+            <Input id="cantidad" name="cantidad" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="ej: 3 noches" />
           </div>
         </div>
         <div>

@@ -50,7 +50,7 @@ export function EditIncome({ income, accounts }: { income: Income; accounts: Acc
             <div>
               <Label>Monto (USD)</Label>
               <input
-                name="amount" type="number" inputMode="decimal" step="0.01" required
+                name="amount" type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*" required
                 defaultValue={String(income.amount)}
                 className="w-full text-2xl font-black text-center border-3 border-ink rounded-md py-2 bg-bg shadow-brutSm focus:outline-none tabular-nums"
               />

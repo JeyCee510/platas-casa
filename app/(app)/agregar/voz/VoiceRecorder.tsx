@@ -208,13 +208,13 @@ export function VoiceRecorder({ categories }: { categories: Category[] }) {
               <Label htmlFor="vamount">Monto (USD)</Label>
               <input
                 id="vamount"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.01"
+                pattern="[0-9]*[.,]?[0-9]*"
                 required
                 placeholder="0.00"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(e.target.value.replace(',', '.'))}
                 className="w-full text-3xl font-black text-center border-3 border-ink rounded-md py-2 bg-bg shadow-brutSm focus:outline-none tabular-nums"
               />
             </div>

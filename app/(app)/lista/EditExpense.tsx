@@ -76,8 +76,8 @@ export function EditExpense({ expense, categories, accounts }: { expense: Expens
           <div>
             <Label>Monto (USD)</Label>
             <input
-              type="number" inputMode="decimal" step="0.01"
-              value={amount} onChange={(e) => setAmount(e.target.value)}
+              type="text" inputMode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+              value={amount} onChange={(e) => setAmount(e.target.value.replace(',', '.'))}
               className="w-full text-2xl font-black text-center border-3 border-ink rounded-md py-2 bg-bg shadow-brutSm focus:outline-none tabular-nums"
             />
           </div>
