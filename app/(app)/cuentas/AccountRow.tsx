@@ -48,18 +48,17 @@ export function AccountRow({ account, showDueDate }: { account: Account; showDue
   }
 
   if (!editing) {
+    const dueLabel = showDueDate && account.due_date
+      ? new Date(account.due_date).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' })
+      : null;
     return (
-      <li className="py-3 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-bold">{account.name}</p>
-          <p className="text-xs">
-            {showDueDate
-              ? account.due_date ? `Vence ${formatDate(account.due_date)}` : 'Sin fecha de vencimiento'
-              : 'Saldo disponible'}
-            {' · '}actualizado {formatDate(account.updated_at)}
-          </p>
+      <li className="py-2.5 flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-sm">{account.name}</p>
+          {dueLabel && <p className="text-[10px] font-bold uppercase">📅 Vence {dueLabel}</p>}
+          {!showDueDate && <p className="text-[10px]">Saldo disponible</p>}
         </div>
-        <span className="font-black text-lg whitespace-nowrap">{formatUSD(Number(account.balance))}</span>
+        <span className="font-black text-base whitespace-nowrap">{formatUSD(Number(account.balance))}</span>
         <Button variant="secondary" onClick={() => setEditing(true)}>Editar</Button>
       </li>
     );

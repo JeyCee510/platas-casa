@@ -13,7 +13,8 @@ export default async function ListaPage({ searchParams }: { searchParams: { cat?
 
   let query = supabase
     .from('expenses')
-    .select('id, amount, description, spent_at, category_id, source')
+    .select('id, amount, description, spent_at, category_id, source, needs_review')
+    .order('needs_review', { ascending: false })
     .order('spent_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(200);
@@ -69,14 +70,18 @@ export default async function ListaPage({ searchParams }: { searchParams: { cat?
           <ul className="divide-y-3 divide-ink">
             {expenses.map((e: any) => {
               const c: any = catMap.get(e.category_id);
+              const sourceEmoji = e.source === 'photo' ? '📸' : e.source === 'voice' ? '🎤' : '';
               return (
-                <li key={e.id} className="p-3 flex items-center gap-3">
+                <li key={e.id} className={`p-3 flex items-center gap-2 ${e.needs_review ? 'bg-peach/40' : ''}`}>
                   <Badge tone={(c?.color as any) ?? 'sky'}>{c ? `${c.emoji} ${c.name}` : 'Sin cat.'}</Badge>
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold truncate">{e.description ?? 'Gasto'}</p>
-                    <p className="text-xs">{formatDate(e.spent_at)} {e.source === 'photo' && '· 📸'}</p>
+                    <p className="font-bold truncate text-sm">
+                      {e.needs_review && <span className="mr-1">🔍</span>}
+                      {e.description ?? 'Gasto'}
+                    </p>
+                    <p className="text-[10px]">{formatDate(e.spent_at)} {sourceEmoji && `· ${sourceEmoji}`}{e.needs_review && ' · verificar'}</p>
                   </div>
-                  <span className="font-black">{formatUSD(Number(e.amount))}</span>
+                  <span className="font-black text-sm whitespace-nowrap">{formatUSD(Number(e.amount))}</span>
                   <DeleteButton id={e.id} />
                 </li>
               );

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { formatUSD, formatDate } from '@/lib/format';
+import { formatUSD, formatDate, monthLabel } from '@/lib/format';
 import { AccountRow } from './AccountRow';
 import { AddAccountForm } from './AddAccountForm';
 
@@ -20,12 +20,14 @@ export default async function CuentasPage() {
   const banks = (accounts ?? []).filter((a: any) => a.type === 'bank_account');
   const totalDeuda = cards.reduce((s: number, a: any) => s + Number(a.balance), 0);
   const totalDisponible = banks.reduce((s: number, a: any) => s + Number(a.balance), 0);
+  const today = new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-black">Cuentas</h1>
-        <p className="text-sm">Tarjetas de crédito y cuentas bancarias del hogar.</p>
+        <p className="text-xs font-black uppercase tracking-widest text-ink/70">{monthLabel(today)}</p>
+        <h1 className="text-2xl font-black">Cuentas</h1>
+        <p className="text-xs">Tarjetas y bancos del hogar.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
