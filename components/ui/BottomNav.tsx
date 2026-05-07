@@ -7,7 +7,7 @@ const tabsAdmin = [
   { href: '/lista',     label: 'Lista',   emoji: '📋' },
   { href: '/agregar',   label: 'Gasto',   emoji: '➕', primary: true },
   { href: '/cuentas',   label: 'Cuentas', emoji: '💳' },
-  { href: '/reporte',   label: 'Reporte', emoji: '📊' },
+  { href: '/alex',      label: 'Alex',    emoji: '👷' },
 ];
 
 const tabsLimited = [
