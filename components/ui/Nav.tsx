@@ -2,15 +2,18 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { userShortName } from '@/lib/userName';
 
 const links = [
   { href: '/', label: 'Inicio' },
   { href: '/agregar', label: '+ Gasto' },
   { href: '/lista', label: 'Lista' },
+  { href: '/cuentas', label: 'Cuentas' },
   { href: '/reporte', label: 'Reporte' },
 ];
 
-export function Nav({ email }: { email?: string | null }) {
+export function Nav({ user }: { user?: { email?: string | null; user_metadata?: any } | null }) {
+  const displayName = userShortName(user);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -40,7 +43,7 @@ export function Nav({ email }: { email?: string | null }) {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          {email && <span className="hidden sm:inline text-sm font-medium">{email}</span>}
+          {displayName && <span className="hidden sm:inline text-sm font-bold">{displayName}</span>}
           <button
             onClick={logout}
             className="px-3 py-1 border-3 border-ink rounded-md font-bold text-sm bg-peach shadow-brutSm hover:translate-x-[1px] hover:translate-y-[1px]"

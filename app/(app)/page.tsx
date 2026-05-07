@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatUSD, formatDate, monthLabel } from '@/lib/format';
 import { CategoryChart } from '@/components/CategoryChart';
+import { userShortName } from '@/lib/userName';
+import { AccountsSummary } from '@/components/AccountsSummary';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +17,12 @@ export default async function DashboardPage() {
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const startOfPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
 
-  const [{ data: monthExpenses }, { data: prevExpenses }, { data: categories }, { data: recent }] = await Promise.all([
+  const [{ data: monthExpenses }, { data: prevExpenses }, { data: categories }, { data: recent }, { data: accounts }] = await Promise.all([
     supabase.from('expenses').select('amount, category_id, spent_at').gte('spent_at', startOfMonth.toISOString().slice(0, 10)),
     supabase.from('expenses').select('amount').gte('spent_at', startOfPrevMonth.toISOString().slice(0, 10)).lt('spent_at', startOfMonth.toISOString().slice(0, 10)),
     supabase.from('categories').select('*').order('id'),
     supabase.from('expenses').select('id, amount, description, spent_at, category_id, source').order('spent_at', { ascending: false }).order('id', { ascending: false }).limit(5),
+    supabase.from('accounts').select('id, type, name, balance, due_date').order('type').order('name'),
   ]);
 
   const totalMonth = (monthExpenses ?? []).reduce((s, e: any) => s + Number(e.amount), 0);
@@ -46,7 +49,7 @@ export default async function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm font-bold uppercase tracking-wide">{monthLabel(today)}</p>
-          <h1 className="text-3xl sm:text-4xl font-black">Hola{user?.email ? `, ${user.email.split('@')[0]}` : ''} 👋</h1>
+          <h1 className="text-3xl sm:text-4xl font-black">Hola{userShortName(user) ? `, ${userShortName(user)}` : ''} 👋</h1>
           <p className="text-sm">Resumen del mes</p>
         </div>
         <div className="flex gap-2">
@@ -105,6 +108,8 @@ export default async function DashboardPage() {
           <Link href="/lista" className="mt-3 inline-block underline font-bold text-sm">Ver todos →</Link>
         </Card>
       </div>
+
+      <AccountsSummary accounts={accounts ?? []} />
     </div>
   );
 }
