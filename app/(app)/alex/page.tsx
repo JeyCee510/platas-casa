@@ -13,6 +13,7 @@ import { AddPrestamoForm } from './AddPrestamoForm';
 import { ConceptosToggle } from './ConceptosToggle';
 import { ComprobanteButton } from './ComprobanteButton';
 import { ExportWhatsApp } from './ExportWhatsApp';
+import { AlexMovimientosCliente } from './AlexMovimientosCliente';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,83 +117,19 @@ async function VistaMes({ anio, mes, concepts, todosConceptos, loans, configTota
         {resumen.totalPlaneado > 0 && <> · Planeado: {formatUSD(resumen.totalPlaneado)}</>}
       </p>
 
-      {/* Movs sueldo */}
-      <Card tone="white" className="overflow-hidden">
-        <div className="bg-mint border-b-3 border-ink px-3 py-1.5">
-          <p className="text-xs font-black uppercase">Sueldo · {MESES[mes - 1]} {anio}</p>
-        </div>
-        {realesSueldo.length === 0 ? (
-          <p className="p-4 text-xs text-center font-bold">Sin pagos este mes.</p>
-        ) : (
-          <ul className="divide-y-3 divide-ink">
-            {realesSueldo.map((m) => (
-              <li key={m.id} className="p-2 flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-sm">{m.concepto_nombre}{m.cantidad ? ` · ${m.cantidad}×` : ''}</p>
-                  <p className="text-[10px]">{fmtFecha(m.fecha)}{m.nota ? ` · ${m.nota}` : ''}</p>
-                </div>
-                <span className="font-black text-sm">{formatUSD(m.monto)}</span>
-                <ComprobanteButton movimientoId={m.id} comprobante={m.comprobante} />
-                <form action={eliminarMovimiento}>
-                  <input type="hidden" name="id" value={m.id} />
-                  <button className="border-3 border-ink rounded-md w-8 h-8 bg-peach shadow-brutSm font-black text-sm">×</button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      {realesExtras.length > 0 && (
-        <Card tone="lilac" className="overflow-hidden">
-          <div className="bg-lilac border-b-3 border-ink px-3 py-1.5">
-            <p className="text-xs font-black uppercase">Extras (no cuentan al sueldo)</p>
-          </div>
-          <ul className="divide-y-3 divide-ink bg-white">
-            {realesExtras.map((m) => (
-              <li key={m.id} className="p-2 flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-sm">{m.concepto_nombre}{m.cantidad ? ` · ${m.cantidad}×` : ''}</p>
-                  <p className="text-[10px]">{fmtFecha(m.fecha)}{m.nota ? ` · ${m.nota}` : ''}</p>
-                </div>
-                <span className="font-black text-sm">{formatUSD(m.monto)}</span>
-                <ComprobanteButton movimientoId={m.id} comprobante={m.comprobante} />
-                <form action={eliminarMovimiento}>
-                  <input type="hidden" name="id" value={m.id} />
-                  <button className="border-3 border-ink rounded-md w-8 h-8 bg-peach shadow-brutSm font-black text-sm">×</button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {planeados.length > 0 && (
-        <Card tone="white" className="overflow-hidden">
-          <div className="bg-bg border-b-3 border-dashed border-ink px-3 py-1.5">
-            <p className="text-xs font-black uppercase">Planeado este mes (✓ confirmar)</p>
-          </div>
-          <ul className="divide-y-3 divide-dashed divide-ink/50">
-            {planeados.map((m) => (
-              <li key={m.id} className="p-2 flex items-center justify-between gap-2 bg-white/50">
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-sm italic">{m.concepto_nombre}</p>
-                  <p className="text-[10px] italic">{fmtFecha(m.fecha)}{m.nota ? ` · ${m.nota}` : ''}</p>
-                </div>
-                <span className="font-bold italic text-sm">{formatUSD(m.monto)}</span>
-                <form action={confirmarMovimientoPlaneado}>
-                  <input type="hidden" name="id" value={m.id} />
-                  <button title="Confirmar como pagado" className="border-3 border-ink rounded-md w-8 h-8 bg-mint shadow-brutSm font-black text-sm">✓</button>
-                </form>
-                <form action={eliminarMovimiento}>
-                  <input type="hidden" name="id" value={m.id} />
-                  <button className="border-3 border-ink rounded-md w-8 h-8 bg-peach shadow-brutSm font-black text-sm">×</button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      <AlexMovimientosCliente
+        realesSueldo={realesSueldo.map((m) => ({ id: m.id, concepto_nombre: m.concepto_nombre ?? '', fecha: m.fecha, monto: m.monto, cantidad: m.cantidad, nota: m.nota, planeado: m.planeado, es_extra: m.es_extra, comprobante: m.comprobante }))}
+        realesExtras={realesExtras.map((m) => ({ id: m.id, concepto_nombre: m.concepto_nombre ?? '', fecha: m.fecha, monto: m.monto, cantidad: m.cantidad, nota: m.nota, planeado: m.planeado, es_extra: m.es_extra, comprobante: m.comprobante }))}
+        planeados={planeados.map((m) => ({ id: m.id, concepto_nombre: m.concepto_nombre ?? '', fecha: m.fecha, monto: m.monto, cantidad: m.cantidad, nota: m.nota, planeado: m.planeado, es_extra: m.es_extra, comprobante: m.comprobante }))}
+        loans={loans.map((p: any) => ({ id: p.id, monto: p.monto, cuotas: p.cuotas, cuota_size: p.cuota_size, cuotas_cobradas: p.cuotas_cobradas, saldo_actual: p.saldo_actual, activo: p.activo }))}
+        mes={mes}
+        anio={anio}
+        totalPagado={resumen.totalPagado}
+        totalExtras={resumen.totalExtras}
+        totalEsperado={resumen.totalEsperado}
+        falta={resumen.falta}
+        saldoPrestamos={resumen.saldoPrestamos}
+      />
 
       <ConceptosToggle todos={todosConceptos} />
 
