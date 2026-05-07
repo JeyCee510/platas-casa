@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select, Label } from '@/components/ui/Input';
 import { crearMovimiento } from '@/lib/alex';
 
-type Concept = { id: number; nombre: string; monto_tipo: number | null; es_extra_default: boolean };
+type Concept = { id: number; nombre: string; monto_tipo: number | null; es_extra_default: boolean; es_fijo: boolean };
 
 export function AddMovimientoForm({ concepts, fechaDefault }: { concepts: Concept[]; fechaDefault: string }) {
   const [open, setOpen] = useState(false);
@@ -38,9 +38,15 @@ export function AddMovimientoForm({ concepts, fechaDefault }: { concepts: Concep
             ))}
           </Select>
         </div>
-        <div>
-          <Label htmlFor="monto">Monto (USD)</Label>
-          <Input id="monto" name="monto" type="number" inputMode="decimal" step="0.01" required value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0.00" />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="monto">Monto (USD)</Label>
+            <Input id="monto" name="monto" type="number" inputMode="decimal" step="0.01" required value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0.00" />
+          </div>
+          <div>
+            <Label htmlFor="cantidad">Cantidad (opc)</Label>
+            <Input id="cantidad" name="cantidad" type="number" inputMode="decimal" step="0.5" placeholder="ej: 3 noches" />
+          </div>
         </div>
         <div>
           <Label htmlFor="fecha">Fecha</Label>

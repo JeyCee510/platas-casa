@@ -57,6 +57,14 @@ export type ResumenMes = {
   movimientos: AlexMovimiento[];
 };
 
+export type ResumenAnio = {
+  anio: number;
+  meses: ResumenMes[];
+  totalPagadoAnio: number;
+  totalExtrasAnio: number;
+  totalEsperadoAnio: number;
+};
+
 export async function getAlexConfig() {
   const supabase = createClient();
   const { data } = await supabase.from('alex_config').select('*').eq('id', 'singleton').single();
@@ -138,6 +146,91 @@ export async function getResumenMes(anio: number, mes: number): Promise<ResumenM
 
 function round(n: number) { return Math.round(n * 100) / 100; }
 
+export async function getResumenAnio(anio: number): Promise<ResumenAnio> {
+  const meses: ResumenMes[] = [];
+  for (let m = 1; m <= 12; m++) meses.push(await getResumenMes(anio, m));
+  const totalPagadoAnio = round(meses.reduce((s, r) => s + r.totalPagado, 0));
+  const totalExtrasAnio = round(meses.reduce((s, r) => s + r.totalExtras, 0));
+  const totalEsperadoAnio = round(meses.reduce((s, r) => s + r.totalEsperado, 0));
+  return { anio, meses, totalPagadoAnio, totalExtrasAnio, totalEsperadoAnio };
+}
+
+const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function fmtMoney(n: number) {
+  return '$' + n.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtFechaCorta(s: string) {
+  const d = new Date(s);
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+export async function generarResumenWhatsApp(anio: number, mes: number): Promise<string> {
+  const r = await getResumenMes(anio, mes);
+  const config = await getAlexConfig();
+  const loans = await listLoans();
+
+  const lineas: string[] = [];
+  lineas.push(`*Platas Alex — ${MESES_ES[mes - 1]} ${anio}*`);
+  lineas.push('');
+  lineas.push(`Total mensual: ${fmtMoney(r.totalEsperado)}`);
+  lineas.push(`Pagado:        ${fmtMoney(r.totalPagado)}`);
+  lineas.push(`Falta:         ${fmtMoney(r.falta)}`);
+  if (r.totalExtras > 0) lineas.push(`Extras:        ${fmtMoney(r.totalExtras)}  _(adicionales al sueldo)_`);
+  lineas.push('');
+
+  const reales = r.movimientos.filter((m) => !m.planeado);
+  const sueldo = reales.filter((m) => !m.es_extra);
+  const extras = reales.filter((m) => m.es_extra);
+
+  if (sueldo.length === 0 && extras.length === 0) {
+    lineas.push('_Sin pagos registrados este mes._');
+  }
+  if (sueldo.length > 0) {
+    lineas.push('*Detalle (sueldo):*');
+    for (const m of sueldo) {
+      const cant = m.cantidad ? ` (${m.cantidad}×)` : '';
+      const nota = m.nota ? `  _${m.nota}_` : '';
+      lineas.push(`• ${fmtFechaCorta(m.fecha)} · ${m.concepto_nombre}${cant}: ${fmtMoney(m.monto)}${nota}`);
+    }
+  }
+  if (extras.length > 0) {
+    if (sueldo.length > 0) lineas.push('');
+    lineas.push('*Gastos extras (no incluidos en sueldo):*');
+    for (const m of extras) {
+      const cant = m.cantidad ? ` (${m.cantidad}×)` : '';
+      const nota = m.nota ? `  _${m.nota}_` : '';
+      lineas.push(`◦ ${fmtFechaCorta(m.fecha)} · ${m.concepto_nombre}${cant}: ${fmtMoney(m.monto)} [EXTRA]${nota}`);
+    }
+  }
+
+  const planeados = r.movimientos.filter((m) => m.planeado);
+  if (planeados.length > 0) {
+    lineas.push('');
+    lineas.push('*Planeado este mes:*');
+    for (const m of planeados) {
+      lineas.push(`◦ ${fmtFechaCorta(m.fecha)} · ${m.concepto_nombre}: ${fmtMoney(m.monto)}${m.nota ? '  _' + m.nota + '_' : ''}`);
+    }
+  }
+
+  const activos = loans.filter((p) => p.activo);
+  if (activos.length > 0) {
+    lineas.push('');
+    lineas.push('*Préstamos activos:*');
+    for (const p of activos) {
+      lineas.push(`• ${fmtMoney(Number(p.monto))} (${p.cuotas_cobradas}/${p.cuotas} cuotas) — saldo ${fmtMoney(Number(p.saldo_actual))}`);
+    }
+  }
+
+  if (config.notas) {
+    lineas.push('');
+    lineas.push(`_${config.notas}_`);
+  }
+
+  return lineas.join('\n');
+}
+
 // ----- Mutaciones -----
 
 export async function crearMovimiento(formData: FormData) {
@@ -145,6 +238,8 @@ export async function crearMovimiento(formData: FormData) {
   const conceptoId = Number(formData.get('concepto_id'));
   const fechaStr = String(formData.get('fecha'));
   const monto = Number(formData.get('monto'));
+  const cantidadRaw = String(formData.get('cantidad') ?? '');
+  const cantidad = cantidadRaw ? Number(cantidadRaw) : null;
   const nota = String(formData.get('nota') ?? '').trim() || null;
   const esExtra = formData.get('es_extra') === 'on';
   if (!conceptoId || !fechaStr || !monto) throw new Error('Datos incompletos');
@@ -154,7 +249,7 @@ export async function crearMovimiento(formData: FormData) {
     fecha: fechaStr,
     anio: fecha.getUTCFullYear(),
     mes: fecha.getUTCMonth() + 1,
-    monto, nota, es_extra: esExtra, planeado: false,
+    monto, cantidad, nota, es_extra: esExtra, planeado: false,
   });
   if (error) throw error;
   revalidatePath('/alex');
