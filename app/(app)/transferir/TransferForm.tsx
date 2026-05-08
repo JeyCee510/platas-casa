@@ -15,6 +15,7 @@ export function TransferForm({ banks, cards }: { banks: Account[]; cards: Accoun
   const [toId, setToId] = useState<string>(cards[0] ? String(cards[0].id) : '');
 
   const targetOptions = tipo === 'pago_tarjeta' ? cards : banks.filter((b) => String(b.id) !== fromId);
+  const [bankCommission, setBankCommission] = useState<number>(0);
 
   return (
     <Card tone="lemon" className="p-4 space-y-3">
@@ -78,9 +79,26 @@ export function TransferForm({ banks, cards }: { banks: Account[]; cards: Accoun
           <Textarea id="fdesc" name="description" rows={2} placeholder="Ej: pago corte abril" />
         </div>
 
+        {tipo === 'pago_tarjeta' && (
+          <div className="space-y-2">
+            <p className="text-xs font-black uppercase">🏦 Comisión bancaria</p>
+            <div className="grid grid-cols-4 gap-2">
+              {[0, 0.31, 0.39, 0.41].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setBankCommission(c)}
+                  className={`border-3 border-ink rounded-md py-2 text-xs font-bold ${bankCommission === c ? 'bg-mint shadow-brutSm' : 'bg-white'}`}
+                >{c === 0 ? 'Sin' : `$${c.toFixed(2)}`}</button>
+              ))}
+            </div>
+            <input type="hidden" name="bank_commission" value={bankCommission} />
+          </div>
+        )}
+
         <p className="text-[11px] font-bold uppercase text-ink/70">
           {tipo === 'pago_tarjeta'
-            ? 'Reduce el saldo del banco origen Y reduce la deuda de la tarjeta.'
+            ? 'Reduce saldo banco, baja deuda tarjeta. Aparece en /lista. Comisión = gasto real extra.'
             : 'Reduce origen, aumenta destino. No afecta gastos.'}
         </p>
 
