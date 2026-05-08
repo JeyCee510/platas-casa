@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { callHaikuJSON, CATEGORY_SLUGS } from '@/lib/anthropic';
+import { todayISO, yesterdayISO } from '@/lib/format';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -15,8 +16,8 @@ export async function POST(req: Request) {
   if (!text) return NextResponse.json({ error: 'Texto vacío' }, { status: 400 });
   if (text.length > 500) return NextResponse.json({ error: 'Texto demasiado largo (máx 500)' }, { status: 400 });
 
-  const today = new Date().toISOString().slice(0, 10);
-  const ayer = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const today = todayISO();
+  const ayer = yesterdayISO();
 
   const systemPrompt = `Extrae info de un gasto descrito por voz en español.
 Ej: "gasté veinte dólares en supermaxi" o "almuerzo cincuenta y cinco con noventa en La Mar".

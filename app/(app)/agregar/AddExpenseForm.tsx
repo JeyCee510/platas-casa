@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Label } from '@/components/ui/Input';
 import { createClient } from '@/lib/supabase/client';
-import { todayISO } from '@/lib/format';
+import { todayISO, yesterdayISO } from '@/lib/format';
 
 type Category = {
   id: number;
@@ -161,8 +161,8 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
 
   const todayStr = todayISO();
   const dateLabel = date === todayStr ? 'Hoy' :
-    date === new Date(Date.now() - 86400000).toISOString().slice(0, 10) ? 'Ayer' :
-    new Date(date).toLocaleDateString('es', { day: '2-digit', month: 'short' });
+    date === yesterdayISO() ? 'Ayer' :
+    new Date(date + 'T12:00:00').toLocaleDateString('es', { day: '2-digit', month: 'short' });
 
   const selectedSub = categories.find((c) => String(c.id) === categoryId);
   const activeSubs = activeGroupId ? subsByGroup.get(activeGroupId) ?? [] : [];
@@ -349,10 +349,28 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
         )}
 
         {/* Fecha (siempre visible) */}
-        <Card tone="white" className="p-3">
-          <Label htmlFor="date-field">📅 Fecha</Label>
-          <Input id="date-field" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-          <p className="text-[10px] font-bold uppercase mt-1 text-ink/70">{dateLabel}</p>
+        <Card tone="white" className="p-3 space-y-2">
+          <Label htmlFor="date-field">📅 Fecha — {dateLabel}</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setDate(todayStr)}
+              className={`border-3 border-ink rounded-md py-2 text-xs font-black uppercase ${date === todayStr ? 'bg-mint shadow-brutSm' : 'bg-white'}`}
+            >Hoy</button>
+            <button
+              type="button"
+              onClick={() => setDate(yesterdayISO())}
+              className={`border-3 border-ink rounded-md py-2 text-xs font-black uppercase ${date === yesterdayISO() ? 'bg-peach shadow-brutSm' : 'bg-white'}`}
+            >Ayer</button>
+          </div>
+          <Input
+            id="date-field"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            style={{ fontSize: '16px', minHeight: '40px' }}
+            className="text-sm"
+          />
         </Card>
 
         {/* Comisión bancaria */}

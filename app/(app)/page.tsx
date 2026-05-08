@@ -115,22 +115,25 @@ export default async function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-black leading-tight">{greeting} 👋</h1>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <Link href="/agregar?source=foto" className="border-3 border-ink rounded-xl bg-sky shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
-          <span className="text-3xl mb-0.5">📸</span>
-          <span className="font-black text-sm leading-tight">Foto</span>
-          <span className="text-[9px] font-bold mt-1 uppercase">IA lee boleta</span>
-        </Link>
-        <Link href="/agregar/voz" className="border-3 border-ink rounded-xl bg-bubble shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
-          <span className="text-3xl mb-0.5">🎤</span>
-          <span className="font-black text-sm leading-tight">Voz</span>
-          <span className="text-[9px] font-bold mt-1 uppercase">Habla, IA registra</span>
-        </Link>
-        <Link href="/agregar?source=manual" className="border-3 border-ink rounded-xl bg-lemon shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
-          <span className="text-3xl mb-0.5">✏️</span>
-          <span className="font-black text-sm leading-tight">Manual</span>
-          <span className="text-[9px] font-bold mt-1 uppercase">Form rápido</span>
-        </Link>
+      <div>
+        <p className="text-xs font-black uppercase tracking-widest mb-1.5">📝 Registrar gasto</p>
+        <div className="grid grid-cols-3 gap-2">
+          <Link href="/agregar?source=foto" className="border-3 border-ink rounded-xl bg-sky shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+            <span className="text-3xl mb-0.5">📸</span>
+            <span className="font-black text-sm leading-tight">Foto</span>
+            <span className="text-[9px] font-bold mt-1 uppercase">IA lee boleta</span>
+          </Link>
+          <Link href="/agregar/voz" className="border-3 border-ink rounded-xl bg-bubble shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+            <span className="text-3xl mb-0.5">🎤</span>
+            <span className="font-black text-sm leading-tight">Voz</span>
+            <span className="text-[9px] font-bold mt-1 uppercase">Habla, IA registra</span>
+          </Link>
+          <Link href="/agregar?source=manual" className="border-3 border-ink rounded-xl bg-lemon shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+            <span className="text-3xl mb-0.5">✏️</span>
+            <span className="font-black text-sm leading-tight">Manual</span>
+            <span className="text-[9px] font-bold mt-1 uppercase">Form rápido</span>
+          </Link>
+        </div>
       </div>
 
       {/* CTAs secundarios: ingreso + transferir */}

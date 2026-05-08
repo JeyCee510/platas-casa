@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { callHaikuJSON, CATEGORY_SLUGS } from '@/lib/anthropic';
+import { todayISO } from '@/lib/format';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
   const arrBuf = await file.arrayBuffer();
   const base64 = Buffer.from(arrBuf).toString('base64');
   const mediaType = (file.type || 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayISO();
 
   const systemPrompt = `Extrae datos de boletas/recibos en español. Devuelve SOLO JSON:
 {

@@ -30,6 +30,19 @@ export function fullDateLabel(d: string | Date): string {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
+// Fecha de hoy en zona horaria de Ecuador (America/Guayaquil, UTC-5).
+// Importante: NO usar new Date().toISOString() porque devuelve UTC y al tarde-noche en Ecuador
+// ya es el día siguiente en UTC.
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+}
+
+export function yesterdayISO(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Guayaquil',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(Date.now() - 86400000));
 }
