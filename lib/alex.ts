@@ -231,6 +231,62 @@ export async function generarResumenWhatsApp(anio: number, mes: number): Promise
   return lineas.join('\n');
 }
 
+// ----- Helpers para mantener integridad con módulo general -----
+
+/**
+ * Crea un expense espejo en general para un movimiento Alex.
+ * - Cuenta: Pichincha (default) o primera cuenta bancaria.
+ * - Categoría: 'alex' (subcategoría definida en migraciones).
+ * - source: 'alex' para distinguir.
+ * Devuelve el expense.id o null si falla.
+ */
+async function crearExpenseEspejoAlex(opts: {
+  amount: number;
+  description: string | null;
+  spent_at: string;
+  conceptoNombre?: string;
+}): Promise<number | null> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const [catRes, pichRes] = await Promise.all([
+    supabase.from('categories').select('id').eq('slug', 'alex').maybeSingle(),
+    supabase.from('accounts').select('id').ilike('name', '%pichincha%').eq('type', 'bank_account').maybeSingle(),
+  ]);
+  let accountId = pichRes.data?.id ?? null;
+  if (!accountId) {
+    const { data: anyBank } = await supabase.from('accounts').select('id').eq('type', 'bank_account').limit(1).maybeSingle();
+    accountId = anyBank?.id ?? null;
+  }
+
+  const desc = opts.description ?? (opts.conceptoNombre ? `Alex: ${opts.conceptoNombre}` : 'Pago Alex');
+  const { data, error } = await supabase.from('expenses').insert({
+    created_by: user.id,
+    amount: opts.amount,
+    currency: 'USD',
+    description: desc,
+    category_id: catRes.data?.id ?? null,
+    account_id: accountId,
+    spent_at: opts.spent_at,
+    source: 'alex',
+    needs_review: false,
+    is_deferred: false,
+    bank_commission: 0,
+  }).select('id').single();
+  if (error) {
+    console.error('crearExpenseEspejoAlex falló:', error);
+    return null;
+  }
+  return data.id;
+}
+
+async function eliminarExpenseEspejo(expenseId: number | null | undefined) {
+  if (!expenseId) return;
+  const supabase = createClient();
+  await supabase.from('expenses').delete().eq('id', expenseId);
+}
+
 // ----- Mutaciones -----
 
 export async function crearMovimiento(formData: FormData) {
@@ -244,15 +300,33 @@ export async function crearMovimiento(formData: FormData) {
   const esExtra = formData.get('es_extra') === 'on';
   if (!conceptoId || !fechaStr || !monto) throw new Error('Datos incompletos');
   const fecha = new Date(fechaStr);
+
+  // Crear expense espejo en general (sale plata real). Sólo movimientos no-planeados.
+  const { data: concepto } = await supabase.from('alex_concepts').select('nombre').eq('id', conceptoId).maybeSingle();
+  const expenseId = await crearExpenseEspejoAlex({
+    amount: monto,
+    description: nota,
+    spent_at: fechaStr,
+    conceptoNombre: concepto?.nombre,
+  });
+
   const { error } = await supabase.from('alex_movements').insert({
     concepto_id: conceptoId,
     fecha: fechaStr,
     anio: fecha.getUTCFullYear(),
     mes: fecha.getUTCMonth() + 1,
     monto, cantidad, nota, es_extra: esExtra, planeado: false,
+    expense_id: expenseId,
   });
-  if (error) throw error;
+  if (error) {
+    // Rollback expense espejo si falla insertar movimiento
+    await eliminarExpenseEspejo(expenseId);
+    throw error;
+  }
   revalidatePath('/alex');
+  revalidatePath('/');
+  revalidatePath('/cuentas');
+  revalidatePath('/lista');
 }
 
 export async function eliminarMovimiento(formData: FormData) {
@@ -272,18 +346,37 @@ export async function eliminarMovimiento(formData: FormData) {
       }).eq('id', p.id);
     }
   }
+  // Si tiene expense espejo, borrarlo también (cobros de préstamo no tienen)
+  if (m?.expense_id) await eliminarExpenseEspejo(m.expense_id);
   await supabase.from('alex_movements').delete().eq('id', id);
   await syncSaldoCache();
   revalidatePath('/alex');
+  revalidatePath('/');
+  revalidatePath('/cuentas');
+  revalidatePath('/lista');
 }
 
 export async function confirmarMovimientoPlaneado(formData: FormData) {
   const supabase = createClient();
   const id = Number(formData.get('id'));
   if (!id) return;
-  const { data: m } = await supabase.from('alex_movements').select('*').eq('id', id).single();
+  const { data: m } = await supabase.from('alex_movements').select('*, alex_concepts(nombre)').eq('id', id).single();
   if (!m || !m.planeado) return;
-  await supabase.from('alex_movements').update({ planeado: false }).eq('id', id);
+
+  // Si NO es cuota de préstamo, crear expense espejo (sale plata al confirmar).
+  // Si SÍ es cuota de préstamo, NO crear expense (es cobro: el préstamo entero ya creó su expense al darse).
+  let expenseId: number | null = m.expense_id ?? null;
+  if (!m.prestamo_id && !expenseId) {
+    expenseId = await crearExpenseEspejoAlex({
+      amount: Number(m.monto),
+      description: m.nota,
+      spent_at: m.fecha,
+      conceptoNombre: (m.alex_concepts as any)?.nombre,
+    });
+  }
+
+  await supabase.from('alex_movements').update({ planeado: false, expense_id: expenseId }).eq('id', id);
+
   if (m.prestamo_id) {
     const { data: p } = await supabase.from('alex_loans').select('*').eq('id', m.prestamo_id).single();
     if (p) {
@@ -297,6 +390,9 @@ export async function confirmarMovimientoPlaneado(formData: FormData) {
   }
   await syncSaldoCache();
   revalidatePath('/alex');
+  revalidatePath('/');
+  revalidatePath('/cuentas');
+  revalidatePath('/lista');
 }
 
 export async function crearPrestamo(formData: FormData) {
@@ -311,11 +407,23 @@ export async function crearPrestamo(formData: FormData) {
   const { data: concepto } = await supabase.from('alex_concepts').select('id').eq('nombre', 'Préstamo nuestro').single();
   if (!concepto) throw new Error('Concepto "Préstamo nuestro" no existe');
 
+  // Crear expense espejo del MONTO TOTAL (sale plata al darle el préstamo).
+  // Las cuotas de cobro NO crean expenses adicionales (es recuperación, no gasto nuevo).
+  const expenseId = await crearExpenseEspejoAlex({
+    amount: monto,
+    description: descripcion ? `Préstamo Alex: ${descripcion}` : `Préstamo Alex (${cuotas} cuotas)`,
+    spent_at: fechaStr,
+  });
+
   const { data: prestamo } = await supabase.from('alex_loans').insert({
     monto, cuotas, cuota_size: cuotaSize, fecha_prestamo: fechaStr, descripcion,
     saldo_actual: monto, cuotas_cobradas: 0, activo: true,
+    expense_id: expenseId,
   }).select('id').single();
-  if (!prestamo) throw new Error('No se pudo crear préstamo');
+  if (!prestamo) {
+    await eliminarExpenseEspejo(expenseId);
+    throw new Error('No se pudo crear préstamo');
+  }
 
   const baseFecha = new Date(fechaStr);
   for (let i = 0; i < cuotas; i++) {
@@ -336,17 +444,26 @@ export async function crearPrestamo(formData: FormData) {
   }
   await syncSaldoCache();
   revalidatePath('/alex');
+  revalidatePath('/');
+  revalidatePath('/cuentas');
+  revalidatePath('/lista');
 }
 
 export async function eliminarPrestamo(formData: FormData) {
   const supabase = createClient();
   const id = Number(formData.get('id'));
   if (!id) return;
+  // Borrar expense espejo del préstamo si existe
+  const { data: p } = await supabase.from('alex_loans').select('expense_id').eq('id', id).maybeSingle();
+  if (p?.expense_id) await eliminarExpenseEspejo(p.expense_id);
   await supabase.from('alex_movements').delete().eq('prestamo_id', id).eq('planeado', true);
   await supabase.from('alex_movements').update({ prestamo_id: null }).eq('prestamo_id', id);
   await supabase.from('alex_loans').delete().eq('id', id);
   await syncSaldoCache();
   revalidatePath('/alex');
+  revalidatePath('/');
+  revalidatePath('/cuentas');
+  revalidatePath('/lista');
 }
 
 async function syncSaldoCache() {

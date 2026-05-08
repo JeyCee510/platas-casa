@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Label } from '@/components/ui/Input';
@@ -126,7 +127,13 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
       }
 
       const selectedSub = categories.find((c) => String(c.id) === categoryId);
-      const isAlexLink = !!selectedSub && ALEX_SLUGS.has(selectedSub.slug) && !!alexConceptoId;
+      // Bloqueo: gastos Alex deben crearse desde el módulo /alex
+      if (selectedSub && ALEX_SLUGS.has(selectedSub.slug)) {
+        setSaving(false);
+        setError('Para Alex usa el módulo Platas Alex (botón arriba).');
+        return;
+      }
+      const isAlexLink = false;
 
       const res = await fetch('/api/save-expense', {
         method: 'POST',
@@ -296,36 +303,17 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
           )}
         </Card>
 
-        {/* Sub-form Alex: aparece cuando subcategoría es Alex / IESS Alex */}
+        {/* Bloqueo Alex: si seleccionan categoría Alex, fuerzan ir al módulo. */}
         {showAlexLink && (
-          <Card tone="bubble" className="p-3 space-y-2">
-            <p className="text-xs font-black uppercase">🔗 Vincular a Platas Alex</p>
-            <p className="text-[10px]">Este gasto se registrará también como pago en el módulo Alex.</p>
-            <div>
-              <Label htmlFor="alex-concept">Concepto en Alex</Label>
-              <select
-                id="alex-concept"
-                value={alexConceptoId}
-                onChange={(e) => setAlexConceptoId(e.target.value)}
-                className="w-full border-3 border-ink rounded-md px-2 py-2 bg-white shadow-brutSm font-bold"
-              >
-                <option value="">— no vincular —</option>
-                {alexConcepts.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nombre}{c.monto_tipo ? ` · $${c.monto_tipo}` : ''}</option>
-                ))}
-              </select>
-            </div>
-            {alexConceptoId && (
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={alexEsExtra}
-                  onChange={(e) => setAlexEsExtra(e.target.checked)}
-                  className="w-5 h-5 border-3 border-ink"
-                />
-                <span className="text-xs font-bold">Es extra (no cuenta al sueldo de $570)</span>
-              </label>
-            )}
+          <Card tone="peach" className="p-3 space-y-2">
+            <p className="text-sm font-black uppercase">⚠️ Pagos a Alex van por el módulo</p>
+            <p className="text-xs">Para mantener todo cuadrado, los pagos a Alex se registran desde el módulo Platas Alex. Allí se crea automáticamente el gasto en general.</p>
+            <Link
+              href="/alex"
+              className="block text-center border-3 border-ink rounded-md bg-white shadow-brutSm py-2 font-black active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            >
+              👷 Ir a Platas Alex →
+            </Link>
           </Card>
         )}
 
@@ -430,8 +418,8 @@ export function AddExpenseForm({ categories, alexConcepts = [], accounts = [], r
 
         {error && <p className="text-sm font-bold text-red-700 px-2">{error}</p>}
 
-        <Button type="submit" full disabled={saving || !amount}>
-          {saving ? 'Guardando…' : '💾 Guardar gasto'}
+        <Button type="submit" full disabled={saving || !amount || showAlexLink}>
+          {saving ? 'Guardando…' : showAlexLink ? '⚠️ Usa el módulo Alex' : '💾 Guardar gasto'}
         </Button>
       </form>
     </div>

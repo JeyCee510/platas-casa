@@ -93,7 +93,7 @@ supabase/             migraciones SQL históricas
 1. **Captura rápida de gastos**: foto (Claude vision OCR) · voz (Web Speech + Haiku) · manual.
 2. **Gestión de cuentas**: bancos (Pichincha, Guayaquil) + tarjetas (Diners, Amex). Saldos auto-sincronizados.
 3. **Categorías jerárquicas**: 11 grupos × ~6 subs cada uno + recientes (top 6).
-4. **Vínculo gasto ↔ Platas Alex**: si subcategoría es Alex/IESS Alex, registra en ambos módulos.
+4. **Vínculo gasto ↔ Platas Alex** (estricto): TODO movimiento en `/alex` (concepto o préstamo entero) crea automáticamente expense espejo en general (cuenta Pichincha, categoría `alex`, source=`alex`). Cuotas de cobro de préstamo NO crean expense (sólo el préstamo entero al darse). Si en `/agregar` seleccionan categoría Alex/IESS Alex, el form se bloquea y se redirige a `/alex`. Vínculos: `alex_movements.expense_id` y `alex_loans.expense_id` (FK a expenses con on delete set null). Borrar movimiento/préstamo borra el expense espejo.
 5. **Pago de tarjeta**: flow dedicado en `/transferir` (no cuenta como gasto, baja saldo banco + baja deuda tarjeta).
 6. **Comisión bancaria** por gasto (0.31 / 0.41) — ajusta saldo total que sale.
 7. **Compartir Alex como imagen PNG** (mes completo o selección con checkboxes) via `html-to-image`.
