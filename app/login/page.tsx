@@ -63,13 +63,13 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-4">
       <Card tone="white" className="w-full max-w-md p-8">
-        <div className="border-3 border-ink bg-mint inline-block px-3 py-1 mb-6 font-black text-2xl shadow-brut">
+        <div className="border-3 border-ink bg-mint inline-block px-4 py-2 mb-6 font-black text-3xl sm:text-4xl tracking-tight shadow-brut">
           PLATAS·CASA
         </div>
         <h1 className="text-2xl font-black mb-2">Entra a tu casa</h1>
         <p className="text-sm mb-6">
           {phase === 'email'
-            ? 'Te enviamos un código de 6 dígitos a tu correo.'
+            ? 'Entra con Google o pide un código por correo.'
             : `Código enviado a ${email}. Pégalo aquí.`}
         </p>
 
