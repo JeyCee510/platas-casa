@@ -144,21 +144,21 @@ export default async function DashboardPage() {
       </div>
 
       {/* Balance del mes: ingresos vs gastos */}
-      <Card tone="white" className="p-4">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div>
+      <Card tone="white" className="p-3">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase">Ingresos</p>
-            <p className="text-xl font-black leading-tight text-green-700">+{formatUSD(incomesMes.total ?? 0)}</p>
+            <p className="text-sm sm:text-base font-black leading-tight text-green-700 tabular-nums whitespace-nowrap">{formatUSD(incomesMes.total ?? 0)}</p>
             <Link href="/ingresos" className="text-[10px] font-bold underline mt-0.5 inline-block">Detalle →</Link>
           </div>
-          <div className="border-x-3 border-ink">
+          <div className="min-w-0 border-x-3 border-ink px-1">
             <p className="text-[10px] font-bold uppercase">Gastos</p>
-            <p className="text-xl font-black leading-tight text-red-700">−{formatUSD(totalMonth)}</p>
+            <p className="text-sm sm:text-base font-black leading-tight text-red-700 tabular-nums whitespace-nowrap">−{formatUSD(totalMonth)}</p>
             <p className="text-[10px] font-bold mt-0.5">{count} mov</p>
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase">Balance</p>
-            <p className={`text-xl font-black leading-tight ${(incomesMes.total ?? 0) - totalMonth >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+            <p className={`text-sm sm:text-base font-black leading-tight tabular-nums whitespace-nowrap ${(incomesMes.total ?? 0) - totalMonth >= 0 ? 'text-green-700' : 'text-red-700'}`}>
               {formatUSD((incomesMes.total ?? 0) - totalMonth)}
             </p>
             <p className="text-[10px] font-bold mt-0.5">del mes</p>

@@ -17,6 +17,13 @@ export function TopBar({ user }: { user?: { email?: string | null; user_metadata
     router.refresh();
   }
 
+  function refresh() {
+    // Fuerza recarga completa para evitar caché PWA
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }
+
   return (
     <header className="sticky top-0 z-30 border-b-3 border-ink bg-mint">
       <div className="max-w-2xl mx-auto px-4 pt-3 pb-3 flex items-end justify-between gap-2">
@@ -30,6 +37,13 @@ export function TopBar({ user }: { user?: { email?: string | null; user_metadata
         </Link>
         <div className="flex items-center gap-2 pb-1">
           {name && <span className="text-sm font-black">{name}</span>}
+          <button
+            onClick={refresh}
+            className="px-2 py-1 border-3 border-ink rounded-md font-bold text-xs bg-sky shadow-brutSm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            title="Refrescar"
+          >
+            ↻
+          </button>
           {admin && (
             <Link
               href="/config"
