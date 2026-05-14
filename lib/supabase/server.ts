@@ -7,6 +7,9 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Schema dedicado en el proyecto Supabase compartido.
+      // Todas las queries .from('expenses') etc. resuelven a platas_casa.expenses.
+      db: { schema: 'platas_casa' as any },
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
