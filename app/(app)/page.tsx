@@ -34,17 +34,17 @@ export default async function DashboardPage() {
 
         {/* CTAs primarias gigantes */}
         <div className="grid grid-cols-3 gap-2">
-          <Link href="/agregar?source=foto" className="border-3 border-ink rounded-xl bg-sky shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+          <Link href="/agregar?source=foto" prefetch={true} className="border-3 border-ink rounded-xl bg-sky shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <span className="text-3xl mb-0.5">📸</span>
             <span className="font-black text-sm leading-tight">Foto</span>
             <span className="text-[9px] font-bold mt-1 uppercase">IA lee boleta</span>
           </Link>
-          <Link href="/agregar/voz" className="border-3 border-ink rounded-xl bg-bubble shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+          <Link href="/agregar/voz" prefetch={true} className="border-3 border-ink rounded-xl bg-bubble shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <span className="text-3xl mb-0.5">🎤</span>
             <span className="font-black text-sm leading-tight">Voz</span>
             <span className="text-[9px] font-bold mt-1 uppercase">Habla, IA registra</span>
           </Link>
-          <Link href="/agregar?source=manual" className="border-3 border-ink rounded-xl bg-lemon shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+          <Link href="/agregar?source=manual" prefetch={true} className="border-3 border-ink rounded-xl bg-lemon shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <span className="text-3xl mb-0.5">✏️</span>
             <span className="font-black text-sm leading-tight">Manual</span>
             <span className="text-[9px] font-bold mt-1 uppercase">Form rápido</span>
@@ -118,17 +118,17 @@ export default async function DashboardPage() {
       <div>
         <p className="text-xs font-black uppercase tracking-widest mb-1.5">📝 Registrar gasto</p>
         <div className="grid grid-cols-3 gap-2">
-          <Link href="/agregar?source=foto" className="border-3 border-ink rounded-xl bg-sky shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+          <Link href="/agregar?source=foto" prefetch={true} className="border-3 border-ink rounded-xl bg-sky shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <span className="text-3xl mb-0.5">📸</span>
             <span className="font-black text-sm leading-tight">Foto</span>
             <span className="text-[9px] font-bold mt-1 uppercase">IA lee boleta</span>
           </Link>
-          <Link href="/agregar/voz" className="border-3 border-ink rounded-xl bg-bubble shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+          <Link href="/agregar/voz" prefetch={true} className="border-3 border-ink rounded-xl bg-bubble shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <span className="text-3xl mb-0.5">🎤</span>
             <span className="font-black text-sm leading-tight">Voz</span>
             <span className="text-[9px] font-bold mt-1 uppercase">Habla, IA registra</span>
           </Link>
-          <Link href="/agregar?source=manual" className="border-3 border-ink rounded-xl bg-lemon shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+          <Link href="/agregar?source=manual" prefetch={true} className="border-3 border-ink rounded-xl bg-lemon shadow-brut p-3 flex flex-col items-center justify-center text-center min-h-[110px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <span className="text-3xl mb-0.5">✏️</span>
             <span className="font-black text-sm leading-tight">Manual</span>
             <span className="text-[9px] font-bold mt-1 uppercase">Form rápido</span>
@@ -138,10 +138,10 @@ export default async function DashboardPage() {
 
       {/* CTAs secundarios: ingreso + transferir */}
       <div className="grid grid-cols-2 gap-2">
-        <Link href="/ingresos" className="border-3 border-ink rounded-md bg-mint shadow-brutSm p-2.5 flex items-center justify-center gap-2 font-black text-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+        <Link href="/ingresos" prefetch={true} className="border-3 border-ink rounded-md bg-mint shadow-brutSm p-2.5 flex items-center justify-center gap-2 font-black text-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
           💰 Ingreso
         </Link>
-        <Link href="/transferir" className="border-3 border-ink rounded-md bg-teal shadow-brutSm p-2.5 flex items-center justify-center gap-2 font-black text-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+        <Link href="/transferir" prefetch={true} className="border-3 border-ink rounded-md bg-teal shadow-brutSm p-2.5 flex items-center justify-center gap-2 font-black text-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
           💳 Pagar tarjeta
         </Link>
       </div>

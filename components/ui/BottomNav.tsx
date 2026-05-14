@@ -34,6 +34,7 @@ export function BottomNav({ role = 'admin' }: { role?: 'admin' | 'full' | 'limit
               <li key={t.href} className="relative">
                 <Link
                   href={t.href}
+                  prefetch={true}
                   className="absolute -top-6 left-1/2 -translate-x-1/2 bg-sky border-3 border-ink rounded-full w-16 h-16 shadow-brut flex flex-col items-center justify-center font-black text-2xl active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                   aria-label="Agregar gasto"
                 >
@@ -47,6 +48,7 @@ export function BottomNav({ role = 'admin' }: { role?: 'admin' | 'full' | 'limit
             <li key={t.href}>
               <Link
                 href={t.href}
+                prefetch={true}
                 className={`flex flex-col items-center justify-center py-2 px-1 text-[11px] font-bold leading-none ${
                   active ? 'text-ink' : 'text-ink/60'
                 }`}
