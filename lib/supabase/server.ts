@@ -3,13 +3,14 @@ import { cookies } from 'next/headers';
 
 export function createClient() {
   const cookieStore = cookies();
+  const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA;
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      // Schema dedicado en el proyecto Supabase compartido.
-      // Todas las queries .from('expenses') etc. resuelven a platas_casa.expenses.
-      db: { schema: 'platas_casa' as any },
+      // Si NEXT_PUBLIC_SUPABASE_SCHEMA está seteada (ej. 'platas_casa'), todas las
+      // queries .from('expenses') resuelven a ese schema. Sin la var, usa public.
+      ...(schema ? { db: { schema: schema as any } } : {}),
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
