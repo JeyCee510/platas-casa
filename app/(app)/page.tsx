@@ -111,7 +111,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs font-black uppercase tracking-widest text-ink/70">{monthLabel(today)}</p>
+        <p className="text-xs font-black uppercase tracking-widest text-ink/70">{fullDateLabel(today)}</p>
         <h1 className="text-2xl sm:text-3xl font-black leading-tight">{greeting} 👋</h1>
       </div>
 

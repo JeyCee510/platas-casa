@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { ROLE_LABEL, type Role } from '@/lib/role';
 
-const OPTIONS: Role[] = ['admin', 'full', 'limited', 'readonly'];
+const OPTIONS: Role[] = ['admin', 'full', 'limited', 'readonly', 'none'];
 
 export function UserRoleEditor({ email, currentRole }: { email: string; currentRole: string }) {
   const router = useRouter();

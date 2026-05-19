@@ -5,19 +5,21 @@
 // - full     : Ana con acceso completo (igual que admin pero NO cambia roles).
 // - limited  : Ana con vista simplificada (solo CTAs + total mensual; no detalle de cuentas/reportes).
 // - readonly : Ana con vista completa pero sin botones de editar/borrar/crear.
+// - none     : Sin acceso. Logueado pero bloqueado en /sin-acceso. Para usuarios pausados.
 
 type AnyUser = {
   app_metadata?: any;
   email?: string | null;
 } | null | undefined;
 
-export type Role = 'admin' | 'full' | 'limited' | 'readonly';
+export type Role = 'admin' | 'full' | 'limited' | 'readonly' | 'none';
 
 export function getRole(user: AnyUser): Role {
   const role = user?.app_metadata?.role;
   if (role === 'full') return 'full';
   if (role === 'limited') return 'limited';
   if (role === 'readonly') return 'readonly';
+  if (role === 'none') return 'none';
   return 'admin';
 }
 
@@ -27,6 +29,10 @@ export function isAdmin(user: AnyUser): boolean {
 
 export function isLimited(user: AnyUser): boolean {
   return getRole(user) === 'limited';
+}
+
+export function isBlocked(user: AnyUser): boolean {
+  return getRole(user) === 'none';
 }
 
 // Acceso a vista completa: ve cuentas, reportes, detalle. NO necesariamente puede editar.
@@ -46,6 +52,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   full: 'Acceso completo',
   limited: 'Acceso limitado',
   readonly: 'Solo lectura',
+  none: 'Sin acceso',
 };
 
 export const ROLE_DESC: Record<Role, string> = {
@@ -53,4 +60,5 @@ export const ROLE_DESC: Record<Role, string> = {
   full: 'Lee y edita todo. No cambia permisos.',
   limited: 'Solo registra gastos/ingresos. Ve totales pero no detalle de cuentas/reportes.',
   readonly: 'Ve todo (lista, cuentas, reportes) pero no puede crear/editar/borrar.',
+  none: 'Pausado. Puede iniciar sesión pero no ve nada de la app. Útil para deshabilitar a alguien sin borrar su cuenta.',
 };
