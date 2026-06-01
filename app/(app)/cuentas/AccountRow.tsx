@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input, Label } from '@/components/ui/Input';
 import { formatUSD, formatDate } from '@/lib/format';
+import { AdjustClose } from './AdjustClose';
 
 type Account = {
   id: number;
@@ -52,14 +53,19 @@ export function AccountRow({ account, showDueDate }: { account: Account; showDue
       ? new Date(account.due_date).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' })
       : null;
     return (
-      <li className="py-2.5 flex items-center justify-between gap-2">
+      <li className="py-2.5 flex items-center justify-between gap-2 flex-wrap">
         <div className="min-w-0 flex-1">
           <p className="font-black text-sm">{account.name}</p>
           {dueLabel && <p className="text-[10px] font-bold uppercase">📅 Vence {dueLabel}</p>}
           {!showDueDate && <p className="text-[10px]">Saldo disponible</p>}
         </div>
         <span className="font-black text-base whitespace-nowrap">{formatUSD(Number(account.balance))}</span>
-        <Button variant="secondary" onClick={() => setEditing(true)}>Editar</Button>
+        <div className="flex gap-1.5">
+          {account.type === 'bank_account' && (
+            <AdjustClose accountId={account.id} accountName={account.name} saldoApp={Number(account.balance)} />
+          )}
+          <Button variant="secondary" onClick={() => setEditing(true)}>Editar</Button>
+        </div>
       </li>
     );
   }
