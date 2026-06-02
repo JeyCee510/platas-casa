@@ -71,13 +71,15 @@ export default async function DashboardPage() {
     { data: prevExpenses },
     { data: categories },
     { data: recent },
+    { data: recentIncomes },
     { data: accounts },
     incomesMes,
   ] = await Promise.all([
     supabase.from('expenses').select('amount, category_id, spent_at').gte('spent_at', startOfMonth.toISOString().slice(0, 10)),
     supabase.from('expenses').select('amount').gte('spent_at', startOfPrevMonth.toISOString().slice(0, 10)).lt('spent_at', startOfMonth.toISOString().slice(0, 10)),
     supabase.from('categories').select('*').order('ord'),
-    supabase.from('expenses').select('id, amount, description, spent_at, category_id, source, needs_review, is_deferred').order('spent_at', { ascending: false }).order('id', { ascending: false }).limit(4),
+    supabase.from('expenses').select('id, amount, description, spent_at, category_id, source, needs_review, is_deferred').order('spent_at', { ascending: false }).order('id', { ascending: false }).limit(6),
+    supabase.from('incomes').select('id, amount, description, source, received_at').order('received_at', { ascending: false }).order('id', { ascending: false }).limit(6),
     supabase.from('accounts').select('id, type, name, balance, due_date').order('type').order('name'),
     totalIncomesMes(today.getFullYear(), today.getMonth() + 1),
   ]);
@@ -186,28 +188,59 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {recent && recent.length > 0 && (
+      {((recent && recent.length > 0) || (recentIncomes && recentIncomes.length > 0)) && (
         <Card tone="lemon" className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-black text-sm uppercase">Últimos</h2>
+            <h2 className="font-black text-sm uppercase">Últimos movimientos</h2>
             <Link href="/lista" className="text-xs underline font-bold">Todos →</Link>
           </div>
           <ul className="divide-y-3 divide-ink">
-            {recent.map((e: any) => {
-              const c: any = catsMap.get(e.category_id);
-              const sourceEmoji = e.source === 'photo' ? '📸' : e.source === 'voice' ? '🎤' : '';
-              return (
-                <li key={e.id} className="py-1.5 flex items-center justify-between gap-2">
+            {(() => {
+              const SOURCE_LABEL: Record<string, string> = {
+                aporte_ac: 'Aporte AC', aporte_jc: 'Aporte JC',
+                intereses: 'Intereses', otros: 'Otros',
+              };
+              type Row = {
+                key: string; kind: 'expense' | 'income'; date: string;
+                amount: number; title: string; sub: string;
+              };
+              const rows: Row[] = [];
+              for (const e of (recent ?? [])) {
+                const c: any = catsMap.get(e.category_id);
+                const sourceEmoji = e.source === 'photo' ? '📸' : e.source === 'voice' ? '🎤' :
+                  e.source === 'alex' ? '👷' : e.source === 'transfer' ? '💳' :
+                  e.source === 'ajuste' ? '⚖️' : '';
+                const title = e.description?.trim() ? e.description : (c?.name ?? 'Gasto');
+                const parts: string[] = [formatDate(e.spent_at)];
+                if (c) parts.push(`${c.emoji} ${c.name}`);
+                if (sourceEmoji) parts.push(sourceEmoji);
+                if (e.needs_review) parts.push('🔍 verificar');
+                rows.push({
+                  key: `e-${e.id}`, kind: 'expense', date: e.spent_at,
+                  amount: Number(e.amount), title, sub: parts.join(' · ')
+                });
+              }
+              for (const i of (recentIncomes ?? [])) {
+                const title = i.description?.trim() ? i.description : (SOURCE_LABEL[i.source] ?? 'Ingreso');
+                rows.push({
+                  key: `i-${i.id}`, kind: 'income', date: i.received_at,
+                  amount: Number(i.amount),
+                  title, sub: `${formatDate(i.received_at)} · 💰 ${SOURCE_LABEL[i.source] ?? i.source}`
+                });
+              }
+              rows.sort((a, b) => b.date.localeCompare(a.date));
+              return rows.slice(0, 6).map((r) => (
+                <li key={r.key} className="py-1.5 flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-bold text-sm truncate">
-                      {e.needs_review && '🔍 '}{e.is_deferred && '💳 '}{e.description ?? 'Gasto'}
-                    </p>
-                    <p className="text-[10px]">{formatDate(e.spent_at)} {c && `· ${c.emoji}`}{sourceEmoji && ` · ${sourceEmoji}`}</p>
+                    <p className="font-bold text-sm truncate">{r.title}</p>
+                    <p className="text-[10px] opacity-80">{r.sub}</p>
                   </div>
-                  <span className="font-black text-sm whitespace-nowrap">{formatUSD(Number(e.amount))}</span>
+                  <span className={`font-black text-sm whitespace-nowrap tabular-nums ${r.kind === 'income' ? 'text-green-700' : ''}`}>
+                    {r.kind === 'income' ? '+' : ''}{formatUSD(r.amount)}
+                  </span>
                 </li>
-              );
-            })}
+              ));
+            })()}
           </ul>
         </Card>
       )}
