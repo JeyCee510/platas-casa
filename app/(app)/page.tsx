@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { formatUSD, formatDate, monthLabel, fullDateLabel } from '@/lib/format';
 import { userShortName } from '@/lib/userName';
-import { hasFullView } from '@/lib/role';
+import { hasFullView, isAdmin } from '@/lib/role';
 import { totalIncomesMes } from '@/lib/incomes';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,10 @@ export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const fullView = hasFullView(user);
+
+  // JC entra directo al módulo Platas Alex — es lo único que usa activamente.
+  // Ana (limited) y otros roles siguen viendo el home de siempre.
+  if (isAdmin(user)) redirect('/alex');
 
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
